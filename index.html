@@ -388,7 +388,19 @@ document.addEventListener("click",()=>document.getElementById("lang-btn").classL
 
 const TYPE_KEYS=["restaurant","cafe","bar","convenience","pharmacy","hospital","supermarket","atm","gas_station","hotel","tourist_attraction","park","shopping_mall","bank","bus_station"];
 function buildTypeSelect(){const sel=document.getElementById("place-type");const cur=sel.value;sel.innerHTML=TYPE_KEYS.map(k=>`<option value="${k}">${tType(k)}</option>`).join("");if(cur)sel.value=cur;}
-function rerenderPlaceNames(){const places=window._places||[];places.forEach(p=>{const tags=p.osmTags||{};p.name=tags[`name:${currentLang}`]||tags["name:en"]||tags["name"]||p.icon;const el=document.getElementById("pi-"+p.id);if(el)el.querySelector(".place-name").textContent=p.name;});if(selectedId){const p=places.find(x=>String(x.id)===String(selectedId));if(p){const dn=document.getElementById("detail-name");if(dn)dn.textContent=p.name;}}}
+function rerenderPlaceNames(){
+  const places=window._places||[];
+  places.forEach(p=>{
+    const tags=p.osmTags||{};
+    // reset ชื่อจาก OSM tag ก่อน
+    p.name=tags[`name:${currentLang}`]||tags["name:en"]||tags["name"]||p.icon;
+    const el=document.getElementById("pi-"+p.id);
+    if(el)el.querySelector(".place-name").textContent=p.name;
+  });
+  if(selectedId){const p=places.find(x=>String(x.id)===String(selectedId));if(p){const dn=document.getElementById("detail-name");if(dn)dn.textContent=p.name;}}
+  // แปลชื่อที่ยังเป็นไทยอยู่
+  if(currentLang!=="th" && places.length) translatePlaceNames(places, currentLang);
+}
 
 const TYPE_MAP={restaurant:{amenity:"restaurant",icon:"🍜",label:"Restaurant"},cafe:{amenity:"cafe",icon:"☕",label:"Café"},bar:{amenity:"bar",icon:"🍺",label:"Bar"},convenience:{shop:"convenience",icon:"🏪",label:"Convenience"},pharmacy:{amenity:"pharmacy",icon:"💊",label:"Pharmacy"},hospital:{amenity:"hospital",icon:"🏥",label:"Hospital"},supermarket:{shop:"supermarket",icon:"🛒",label:"Supermarket"},atm:{amenity:"atm",icon:"💳",label:"ATM"},gas_station:{amenity:"fuel",icon:"⛽",label:"Gas Station"},hotel:{tourism:"hotel",icon:"🏨",label:"Hotel"},tourist_attraction:{tourism:"attraction",icon:"🗺️",label:"Attraction"},park:{leisure:"park",icon:"🌿",label:"Park"},shopping_mall:{shop:"mall",icon:"🛍️",label:"Mall"},bank:{amenity:"bank",icon:"🏦",label:"Bank"},bus_station:{amenity:"bus_station",icon:"🚌",label:"Bus Station"}};
 
@@ -434,6 +446,8 @@ function renderResults(elements,ti,radiusM){
   window._places=places;
   showStatus(`${t("found")} ${places.length} ${t("places")}`,"success",2500);
   addHistory({icon:ti.icon,label:ti.label,count:places.length,time:Date.now(),radius:fmtDist(radiusM)});
+  // แปลชื่อสถานที่ถ้าภาษาไม่ใช่ไทย
+  if(currentLang !== "th") translatePlaceNames(places, currentLang);
 }
 
 function selectPlace(id,places){const list=places||window._places||[];const p=list.find(x=>String(x.id)===String(id));if(!p)return;document.querySelectorAll(".place-item").forEach(el=>el.classList.remove("active"));const item=document.getElementById("pi-"+id);if(item){item.classList.add("active");item.scrollIntoView({behavior:"smooth",block:"nearest"});}if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}selectedId=id;renderDetail(p);drawRoadRoute(p);}
@@ -469,7 +483,53 @@ async function loadWeather(){if(!userLat)return;const btn=document.getElementByI
 function renderHourly(h){const now=new Date(),ch=now.getHours(),items=[];for(let i=0;i<24;i++){const hr=(ch+i)%24;const idx=h.time.findIndex(t=>new Date(t).getHours()===hr&&(i===0||new Date(t)>now));if(idx===-1)continue;items.push({label:i===0?"Now":hr+":00",icon:wCode2Icon(h.weather_code[idx]),temp:Math.round(h.temperature_2m[idx]),now:i===0});if(items.length>=12)break;}document.getElementById("hourly-row").innerHTML=items.map(x=>`<div class="hour-card${x.now?" now":""}"><div class="hour-time">${x.label}</div><div class="hour-ico">${x.icon}</div><div class="hour-tmp">${x.temp}°</div></div>`).join("");}
 function drawTempGraph(h){const canvas=document.getElementById("temp-canvas");const ctx=canvas.getContext("2d");const dpr=window.devicePixelRatio||1;const W=canvas.offsetWidth||300,H=80;canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);const temps=h.temperature_2m.slice(0,24);const mn=Math.min(...temps)-2,mx=Math.max(...temps)+2;const px=i=>(i/(temps.length-1))*W;const py=t=>H-((t-mn)/(mx-mn))*(H-18)-9;const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(56,189,248,.2)");g.addColorStop(1,"rgba(56,189,248,0)");ctx.beginPath();ctx.moveTo(px(0),py(temps[0]));for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}ctx.lineTo(px(temps.length-1),H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.moveTo(px(0),py(temps[0]));for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#64748b";ctx.font="10px DM Mono,monospace";ctx.textAlign="center";[0,6,12,18,23].forEach(i=>{if(i<temps.length)ctx.fillText(Math.round(temps[i])+"°",px(i),py(temps[i])-4);});}
 
-// ══ SAVED PLACES ══
+// ══ NAME TRANSLATION ══
+const translateCache = {};
+
+async function translateName(text, targetLang) {
+  // ไม่ต้องแปลถ้าเป็น EN หรือชื่อสั้นมาก หรือเป็น ASCII อยู่แล้ว
+  if (targetLang === "th") return text; // ภาษาไทยใช้ชื่อไทยได้เลย
+  if (!text || text.length < 2) return text;
+  if (/^[\x00-\x7F\s]+$/.test(text)) return text; // ASCII แล้ว ไม่ต้องแปล
+
+  const cacheKey = `${text}|${targetLang}`;
+  if (translateCache[cacheKey]) return translateCache[cacheKey];
+
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=th|${targetLang}`
+    );
+    const data = await res.json();
+    const translated = data?.responseData?.translatedText;
+    if (translated && translated !== text && !translated.includes("MYMEMORY")) {
+      translateCache[cacheKey] = translated;
+      return translated;
+    }
+  } catch(e) {}
+  return text; // fallback ชื่อเดิม
+}
+
+async function translatePlaceNames(places, targetLang) {
+  if (targetLang === "th") return; // ไม่ต้องแปล
+  // แปลพร้อมกันทุกสถานที่ที่ยังเป็นชื่อไทย (ตรวจจาก Unicode range)
+  const toTranslate = places.filter(p => /[\u0E00-\u0E7F]/.test(p.name));
+  if (!toTranslate.length) return;
+
+  await Promise.all(toTranslate.map(async p => {
+    const translated = await translateName(p.name, targetLang);
+    if (translated !== p.name) {
+      p.name = translated;
+      // อัปเดต DOM ถ้ามีแล้ว
+      const el = document.getElementById("pi-" + p.id);
+      if (el) el.querySelector(".place-name").textContent = translated;
+      // อัปเดต detail ถ้ากำลังแสดงอยู่
+      if (String(p.id) === String(selectedId)) {
+        const dn = document.getElementById("detail-name");
+        if (dn) dn.textContent = translated;
+      }
+    }
+  }));
+}
 const SAVED_KEY = "nb_saved";
 function getSaved(){ try{ return JSON.parse(localStorage.getItem(SAVED_KEY)||"[]"); }catch{ return []; } }
 function saveSaved(arr){ localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); }
