@@ -202,6 +202,35 @@
   ::-webkit-scrollbar{width:3px;height:3px}
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
+  /* ── LOCATION CARD ── */
+  .loc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  #dash-mini-map{height:140px;width:100%;display:block;z-index:0}
+  .loc-card-body{padding:12px 14px}
+  .loc-breadcrumb{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+  .loc-name{font-size:15px;font-weight:600;margin-bottom:2px}
+  .loc-coords{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace}
+  .loc-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .loc-pill{background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2)}
+
+  /* ── SAVED PLACES ── */
+  .saved-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .15s}
+  .saved-item:last-child{border-bottom:none}
+  .saved-item:hover{padding-left:4px}
+  .saved-ico{width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .15s}
+  .saved-item:hover .saved-ico{border-color:var(--accent);background:var(--accent-dim)}
+  .saved-info{flex:1;min-width:0}
+  .saved-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .saved-meta{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px}
+  .saved-del{flex-shrink:0;width:24px;height:24px;border-radius:6px;background:none;border:1px solid transparent;color:var(--text3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .saved-del:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+
+  /* ── PIN BUTTON in detail panel ── */
+  .pin-btn{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:9px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+  .pin-btn:hover{border-color:var(--yellow);color:var(--yellow);background:rgba(251,191,36,.08)}
+  .pin-btn.pinned{border-color:var(--yellow);color:var(--yellow);background:rgba(251,191,36,.1)}
+  .detail-actions{display:flex;gap:8px;margin-bottom:0}
+  .nav-btn{flex:2}
+
   @media(max-width:640px){
     :root{--panel-w:100%}
     .radar-body{flex-direction:column}
@@ -268,6 +297,20 @@
 
   <div class="page" id="page-dashboard">
     <div class="dash-scroll">
+
+      <!-- LOCATION CARD -->
+      <div class="loc-card">
+        <div id="dash-mini-map"></div>
+        <div class="loc-card-body">
+          <div class="loc-breadcrumb"><span class="live-dot"></span><span id="loc-country">—</span></div>
+          <div class="loc-name" id="loc-fullname">Locating…</div>
+          <div class="loc-coords" id="loc-coords">— , —</div>
+          <div class="loc-pills">
+            <span class="loc-pill" id="loc-district">—</span>
+            <span class="loc-pill" id="loc-postcode" style="display:none">—</span>
+          </div>
+        </div>
+      </div>
       <div class="weather-hero">
         <button class="w-refresh" id="refresh-btn" onclick="loadWeather()"><span class="spin-icon">↻</span> <span data-i18n="refresh">Refresh</span></button>
         <div class="w-row1">
@@ -302,6 +345,10 @@
         <div class="stat-card"><div class="sc-label">☁️ Cloud Cover</div><div class="sc-val" id="s-cloud">—</div><div class="sc-sub" data-i18n="cloud_cover">Cloud cover</div><div class="sc-bar"><div class="sc-bar-fill" id="s-cloud-bar" style="width:0%;background:var(--text2)"></div></div></div>
       </div>
       <div class="dash-card">
+        <div class="card-label" data-i18n="saved_places">Saved Places</div>
+        <div id="saved-list"><div style="color:var(--text3);font-size:12px;padding:6px 0;" data-i18n="no_saved">No saved places yet — pin places from the Radar tab!</div></div>
+      </div>
+      <div class="dash-card">
         <div class="card-label" data-i18n="recent_searches">Recent Searches</div>
         <div id="history-list"><div style="color:var(--text3);font-size:12px;padding:6px 0;" data-i18n="no_searches">No searches yet — use the Radar tab!</div></div>
       </div>
@@ -319,11 +366,11 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const LANGS={
-  en:{locating:"locating…",located:"📍 Located",no_gps:"⚠️ No GPS",search:"Search",results:"Results",refresh:"Refresh",forecast:"24-Hour Forecast",rain_chance:"🌧️ Rain Chance",cloud_cover:"Cloud cover",recent_searches:"Recent Searches",no_searches:"No searches yet — use the Radar tab!",empty_search:"Search for nearby places to see results here.",tab_radar:"🗺️ Radar",tab_dashboard:"📊 Dashboard",nav_btn:"🧭 Navigate",straight_line:"↗ Straight line",routing:"⏳ Routing…",amenities:"Amenities",photos_loading:"Loading photos…",no_photos:"No photos",found:"✓ Found",places:"places",searching:"🔍 Searching…",search_failed:"⚠️ Search failed",no_found:"No",found_within:"found within",feels_like:"Feels like",last_updated:"Last updated:",sunrise:"Sunset:",uv_low:"Low — Safe",uv_mod:"Moderate",uv_high:"High",uv_vhigh:"Very High",rain_unlikely:"Unlikely",rain_possible:"Possible",rain_likely:"Likely",types:{restaurant:"🍜 Restaurant",cafe:"☕ Café / Coffee",bar:"🍺 Bar",convenience:"🏪 Convenience",pharmacy:"💊 Pharmacy",hospital:"🏥 Hospital",supermarket:"🛒 Supermarket",atm:"💳 ATM",gas_station:"⛽ Gas Station",hotel:"🏨 Hotel",tourist_attraction:"🗺️ Attraction",park:"🌿 Park",shopping_mall:"🛍️ Shopping Mall",bank:"🏦 Bank",bus_station:"🚌 Bus Station"}},
-  th:{locating:"กำลังระบุตำแหน่ง…",located:"📍 พบตำแหน่ง",no_gps:"⚠️ ไม่มี GPS",search:"ค้นหา",results:"ผลลัพธ์",refresh:"รีเฟรช",forecast:"พยากรณ์ 24 ชั่วโมง",rain_chance:"🌧️ โอกาสฝนตก",cloud_cover:"ปริมาณเมฆ",recent_searches:"การค้นหาล่าสุด",no_searches:"ยังไม่มีการค้นหา",empty_search:"ค้นหาสถานที่ใกล้เคียงเพื่อดูผลลัพธ์",tab_radar:"🗺️ เรดาร์",tab_dashboard:"📊 แดชบอร์ด",nav_btn:"🧭 นำทาง",straight_line:"↗ เส้นตรง",routing:"⏳ กำลังคำนวณ…",amenities:"สิ่งอำนวยฯ",photos_loading:"กำลังโหลด…",no_photos:"ไม่มีรูปภาพ",found:"✓ พบ",places:"สถานที่",searching:"🔍 กำลังค้นหา…",search_failed:"⚠️ ค้นหาล้มเหลว",no_found:"ไม่พบ",found_within:"ในระยะ",feels_like:"รู้สึกเหมือน",last_updated:"อัปเดตล่าสุด:",sunrise:"พระอาทิตย์ตก:",uv_low:"ต่ำ — ปลอดภัย",uv_mod:"ปานกลาง",uv_high:"สูง",uv_vhigh:"สูงมาก",rain_unlikely:"ไม่น่าฝนตก",rain_possible:"อาจฝนตก",rain_likely:"มีแนวโน้มฝนตก",types:{restaurant:"🍜 ร้านอาหาร",cafe:"☕ คาเฟ่",bar:"🍺 บาร์",convenience:"🏪 ร้านสะดวกซื้อ",pharmacy:"💊 ร้านขายยา",hospital:"🏥 โรงพยาบาล",supermarket:"🛒 ซูเปอร์มาร์เก็ต",atm:"💳 ตู้เอทีเอ็ม",gas_station:"⛽ ปั๊มน้ำมัน",hotel:"🏨 โรงแรม",tourist_attraction:"🗺️ สถานที่ท่องเที่ยว",park:"🌿 สวนสาธารณะ",shopping_mall:"🛍️ ห้างสรรพสินค้า",bank:"🏦 ธนาคาร",bus_station:"🚌 สถานีรถเมล์"}},
-  ja:{locating:"位置を取得中…",located:"📍 位置確認済",no_gps:"⚠️ GPSなし",search:"検索",results:"結果",refresh:"更新",forecast:"24時間予報",rain_chance:"🌧️ 降水確率",cloud_cover:"雲量",recent_searches:"最近の検索",no_searches:"まだ検索なし",empty_search:"近くの場所を検索してください。",tab_radar:"🗺️ レーダー",tab_dashboard:"📊 ダッシュボード",nav_btn:"🧭 ナビ",straight_line:"↗ 直線距離",routing:"⏳ 経路計算中…",amenities:"設備",photos_loading:"読み込み中…",no_photos:"写真なし",found:"✓",places:"件",searching:"🔍 検索中…",search_failed:"⚠️ 検索失敗",no_found:"",found_within:"範囲内",feels_like:"体感",last_updated:"最終更新:",sunrise:"日没:",uv_low:"低",uv_mod:"中",uv_high:"高",uv_vhigh:"非常に高い",rain_unlikely:"降らない",rain_possible:"可能性あり",rain_likely:"降りそう",types:{restaurant:"🍜 レストラン",cafe:"☕ カフェ",bar:"🍺 バー",convenience:"🏪 コンビニ",pharmacy:"💊 薬局",hospital:"🏥 病院",supermarket:"🛒 スーパー",atm:"💳 ATM",gas_station:"⛽ ガソリンスタンド",hotel:"🏨 ホテル",tourist_attraction:"🗺️ 観光地",park:"🌿 公園",shopping_mall:"🛍️ ショッピングモール",bank:"🏦 銀行",bus_station:"🚌 バス停"}},
-  zh:{locating:"定位中…",located:"📍 已定位",no_gps:"⚠️ 无GPS",search:"搜索",results:"结果",refresh:"刷新",forecast:"24小时预报",rain_chance:"🌧️ 降雨概率",cloud_cover:"云量",recent_searches:"最近搜索",no_searches:"暂无搜索",empty_search:"搜索附近地点以查看结果。",tab_radar:"🗺️ 雷达",tab_dashboard:"📊 仪表板",nav_btn:"🧭 导航",straight_line:"↗ 直线距离",routing:"⏳ 路线计算中…",amenities:"设施",photos_loading:"加载中…",no_photos:"暂无图片",found:"✓ 找到",places:"个",searching:"🔍 搜索中…",search_failed:"⚠️ 搜索失败",no_found:"未找到",found_within:"范围内",feels_like:"体感",last_updated:"最后更新:",sunrise:"日落:",uv_low:"低",uv_mod:"中等",uv_high:"高",uv_vhigh:"非常高",rain_unlikely:"不太可能",rain_possible:"可能",rain_likely:"很可能",types:{restaurant:"🍜 餐厅",cafe:"☕ 咖啡馆",bar:"🍺 酒吧",convenience:"🏪 便利店",pharmacy:"💊 药店",hospital:"🏥 医院",supermarket:"🛒 超市",atm:"💳 ATM",gas_station:"⛽ 加油站",hotel:"🏨 酒店",tourist_attraction:"🗺️ 景点",park:"🌿 公园",shopping_mall:"🛍️ 购物中心",bank:"🏦 银行",bus_station:"🚌 公交站"}},
-  ko:{locating:"위치 확인 중…",located:"📍 위치 확인됨",no_gps:"⚠️ GPS 없음",search:"검색",results:"결과",refresh:"새로고침",forecast:"24시간 예보",rain_chance:"🌧️ 강수 확률",cloud_cover:"구름량",recent_searches:"최근 검색",no_searches:"아직 검색 없음",empty_search:"근처 장소를 검색하세요.",tab_radar:"🗺️ 레이더",tab_dashboard:"📊 대시보드",nav_btn:"🧭 내비게이션",straight_line:"↗ 직선거리",routing:"⏳ 경로 계산 중…",amenities:"편의시설",photos_loading:"불러오는 중…",no_photos:"사진 없음",found:"✓",places:"개 발견",searching:"🔍 검색 중…",search_failed:"⚠️ 검색 실패",no_found:"없음",found_within:"범위 내",feels_like:"체감",last_updated:"마지막 업데이트:",sunrise:"일몰:",uv_low:"낮음",uv_mod:"보통",uv_high:"높음",uv_vhigh:"매우 높음",rain_unlikely:"가능성 낮음",rain_possible:"가능성 있음",rain_likely:"가능성 높음",types:{restaurant:"🍜 레스토랑",cafe:"☕ 카페",bar:"🍺 바",convenience:"🏪 편의점",pharmacy:"💊 약국",hospital:"🏥 병원",supermarket:"🛒 슈퍼마켓",atm:"💳 ATM",gas_station:"⛽ 주유소",hotel:"🏨 호텔",tourist_attraction:"🗺️ 관광지",park:"🌿 공원",shopping_mall:"🛍️ 쇼핑몰",bank:"🏦 은행",bus_station:"🚌 버스 정류장"}},
+  en:{locating:"locating…",located:"📍 Located",no_gps:"⚠️ No GPS",search:"Search",results:"Results",refresh:"Refresh",forecast:"24-Hour Forecast",rain_chance:"🌧️ Rain Chance",cloud_cover:"Cloud cover",recent_searches:"Recent Searches",no_searches:"No searches yet — use the Radar tab!",empty_search:"Search for nearby places to see results here.",tab_radar:"🗺️ Radar",tab_dashboard:"📊 Dashboard",nav_btn:"🧭 Navigate",straight_line:"↗ Straight line",routing:"⏳ Routing…",amenities:"Amenities",photos_loading:"Loading photos…",no_photos:"No photos",found:"✓ Found",places:"places",searching:"🔍 Searching…",search_failed:"⚠️ Search failed",no_found:"No",found_within:"found within",feels_like:"Feels like",last_updated:"Last updated:",sunrise:"Sunset:",uv_low:"Low — Safe",uv_mod:"Moderate",uv_high:"High",uv_vhigh:"Very High",rain_unlikely:"Unlikely",rain_possible:"Possible",rain_likely:"Likely",saved_places:"📌 Saved Places",no_saved:"No saved places yet — pin places from the Radar tab!",pin:"Pin",unpin:"Unpin",types:{restaurant:"🍜 Restaurant",cafe:"☕ Café / Coffee",bar:"🍺 Bar",convenience:"🏪 Convenience",pharmacy:"💊 Pharmacy",hospital:"🏥 Hospital",supermarket:"🛒 Supermarket",atm:"💳 ATM",gas_station:"⛽ Gas Station",hotel:"🏨 Hotel",tourist_attraction:"🗺️ Attraction",park:"🌿 Park",shopping_mall:"🛍️ Shopping Mall",bank:"🏦 Bank",bus_station:"🚌 Bus Station"}},
+  th:{locating:"กำลังระบุตำแหน่ง…",located:"📍 พบตำแหน่ง",no_gps:"⚠️ ไม่มี GPS",search:"ค้นหา",results:"ผลลัพธ์",refresh:"รีเฟรช",forecast:"พยากรณ์ 24 ชั่วโมง",rain_chance:"🌧️ โอกาสฝนตก",cloud_cover:"ปริมาณเมฆ",recent_searches:"การค้นหาล่าสุด",no_searches:"ยังไม่มีการค้นหา",empty_search:"ค้นหาสถานที่ใกล้เคียงเพื่อดูผลลัพธ์",tab_radar:"🗺️ เรดาร์",tab_dashboard:"📊 แดชบอร์ด",nav_btn:"🧭 นำทาง",straight_line:"↗ เส้นตรง",routing:"⏳ กำลังคำนวณ…",amenities:"สิ่งอำนวยฯ",photos_loading:"กำลังโหลด…",no_photos:"ไม่มีรูปภาพ",found:"✓ พบ",places:"สถานที่",searching:"🔍 กำลังค้นหา…",search_failed:"⚠️ ค้นหาล้มเหลว",no_found:"ไม่พบ",found_within:"ในระยะ",feels_like:"รู้สึกเหมือน",last_updated:"อัปเดตล่าสุด:",sunrise:"พระอาทิตย์ตก:",uv_low:"ต่ำ — ปลอดภัย",uv_mod:"ปานกลาง",uv_high:"สูง",uv_vhigh:"สูงมาก",rain_unlikely:"ไม่น่าฝนตก",rain_possible:"อาจฝนตก",rain_likely:"มีแนวโน้มฝนตก",saved_places:"📌 สถานที่บันทึก",no_saved:"ยังไม่มีสถานที่บันทึก — ปักหมุดจากแท็บ Radar!",pin:"ปักหมุด",unpin:"ยกเลิก",types:{restaurant:"🍜 ร้านอาหาร",cafe:"☕ คาเฟ่",bar:"🍺 บาร์",convenience:"🏪 ร้านสะดวกซื้อ",pharmacy:"💊 ร้านขายยา",hospital:"🏥 โรงพยาบาล",supermarket:"🛒 ซูเปอร์มาร์เก็ต",atm:"💳 ตู้เอทีเอ็ม",gas_station:"⛽ ปั๊มน้ำมัน",hotel:"🏨 โรงแรม",tourist_attraction:"🗺️ สถานที่ท่องเที่ยว",park:"🌿 สวนสาธารณะ",shopping_mall:"🛍️ ห้างสรรพสินค้า",bank:"🏦 ธนาคาร",bus_station:"🚌 สถานีรถเมล์"}},
+  ja:{locating:"位置を取得中…",located:"📍 位置確認済",no_gps:"⚠️ GPSなし",search:"検索",results:"結果",refresh:"更新",forecast:"24時間予報",rain_chance:"🌧️ 降水確率",cloud_cover:"雲量",recent_searches:"最近の検索",no_searches:"まだ検索なし",empty_search:"近くの場所を検索してください。",tab_radar:"🗺️ レーダー",tab_dashboard:"📊 ダッシュボード",nav_btn:"🧭 ナビ",straight_line:"↗ 直線距離",routing:"⏳ 経路計算中…",amenities:"設備",photos_loading:"読み込み中…",no_photos:"写真なし",found:"✓",places:"件",searching:"🔍 検索中…",search_failed:"⚠️ 検索失敗",no_found:"",found_within:"範囲内",feels_like:"体感",last_updated:"最終更新:",sunrise:"日没:",uv_low:"低",uv_mod:"中",uv_high:"高",uv_vhigh:"非常に高い",rain_unlikely:"降らない",rain_possible:"可能性あり",rain_likely:"降りそう",saved_places:"📌 保存した場所",no_saved:"まだ保存した場所がありません",pin:"保存",unpin:"解除",types:{restaurant:"🍜 レストラン",cafe:"☕ カフェ",bar:"🍺 バー",convenience:"🏪 コンビニ",pharmacy:"💊 薬局",hospital:"🏥 病院",supermarket:"🛒 スーパー",atm:"💳 ATM",gas_station:"⛽ ガソリンスタンド",hotel:"🏨 ホテル",tourist_attraction:"🗺️ 観光地",park:"🌿 公園",shopping_mall:"🛍️ ショッピングモール",bank:"🏦 銀行",bus_station:"🚌 バス停"}},
+  zh:{locating:"定位中…",located:"📍 已定位",no_gps:"⚠️ 无GPS",search:"搜索",results:"结果",refresh:"刷新",forecast:"24小时预报",rain_chance:"🌧️ 降雨概率",cloud_cover:"云量",recent_searches:"最近搜索",no_searches:"暂无搜索",empty_search:"搜索附近地点以查看结果。",tab_radar:"🗺️ 雷达",tab_dashboard:"📊 仪表板",nav_btn:"🧭 导航",straight_line:"↗ 直线距离",routing:"⏳ 路线计算中…",amenities:"设施",photos_loading:"加载中…",no_photos:"暂无图片",found:"✓ 找到",places:"个",searching:"🔍 搜索中…",search_failed:"⚠️ 搜索失败",no_found:"未找到",found_within:"范围内",feels_like:"体感",last_updated:"最后更新:",sunrise:"日落:",uv_low:"低",uv_mod:"中等",uv_high:"高",uv_vhigh:"非常高",rain_unlikely:"不太可能",rain_possible:"可能",rain_likely:"很可能",saved_places:"📌 收藏地点",no_saved:"还没有收藏地点",pin:"收藏",unpin:"取消",types:{restaurant:"🍜 餐厅",cafe:"☕ 咖啡馆",bar:"🍺 酒吧",convenience:"🏪 便利店",pharmacy:"💊 药店",hospital:"🏥 医院",supermarket:"🛒 超市",atm:"💳 ATM",gas_station:"⛽ 加油站",hotel:"🏨 酒店",tourist_attraction:"🗺️ 景点",park:"🌿 公园",shopping_mall:"🛍️ 购物中心",bank:"🏦 银行",bus_station:"🚌 公交站"}},
+  ko:{locating:"위치 확인 중…",located:"📍 위치 확인됨",no_gps:"⚠️ GPS 없음",search:"검색",results:"결과",refresh:"새로고침",forecast:"24시간 예보",rain_chance:"🌧️ 강수 확률",cloud_cover:"구름량",recent_searches:"최근 검색",no_searches:"아직 검색 없음",empty_search:"근처 장소를 검색하세요.",tab_radar:"🗺️ 레이더",tab_dashboard:"📊 대시보드",nav_btn:"🧭 내비게이션",straight_line:"↗ 직선거리",routing:"⏳ 경로 계산 중…",amenities:"편의시설",photos_loading:"불러오는 중…",no_photos:"사진 없음",found:"✓",places:"개 발견",searching:"🔍 검색 중…",search_failed:"⚠️ 검색 실패",no_found:"없음",found_within:"범위 내",feels_like:"체감",last_updated:"마지막 업데이트:",sunrise:"일몰:",uv_low:"낮음",uv_mod:"보통",uv_high:"높음",uv_vhigh:"매우 높음",rain_unlikely:"가능성 낮음",rain_possible:"가능성 있음",rain_likely:"가능성 높음",saved_places:"📌 저장된 장소",no_saved:"저장된 장소가 없습니다",pin:"저장",unpin:"삭제",types:{restaurant:"🍜 레스토랑",cafe:"☕ 카페",bar:"🍺 바",convenience:"🏪 편의점",pharmacy:"💊 약국",hospital:"🏥 병원",supermarket:"🛒 슈퍼마켓",atm:"💳 ATM",gas_station:"⛽ 주유소",hotel:"🏨 호텔",tourist_attraction:"🗺️ 관광지",park:"🌿 공원",shopping_mall:"🛍️ 쇼핑몰",bank:"🏦 은행",bus_station:"🚌 버스 정류장"}},
 };
 let currentLang=localStorage.getItem("nb_lang")||"en";
 function t(k){return LANGS[currentLang]?.[k]??LANGS.en[k]??k;}
@@ -364,7 +411,7 @@ function showPage(name){
   document.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
   document.getElementById("page-"+name).classList.add("active");
   document.querySelectorAll(".nav-tab").forEach(tab=>{const txt=tab.textContent;if(name==="radar"&&(txt.includes("Radar")||txt.includes("เรดาร์")||txt.includes("レーダー")||txt.includes("雷达")||txt.includes("레이더")))tab.classList.add("active");if(name==="dashboard"&&(txt.includes("Dashboard")||txt.includes("แดชบอร์ด")||txt.includes("ダッシュボード")||txt.includes("仪表板")||txt.includes("대시보드")))tab.classList.add("active");});
-  if(name==="dashboard"){renderHistory();if(!weatherLoaded&&userLat)loadWeather();}
+  if(name==="dashboard"){renderHistory();renderSaved();if(!weatherLoaded&&userLat)loadWeather();setTimeout(()=>{if(dashMap)dashMap.invalidateSize();},60);}
   if(name==="radar"&&map)setTimeout(()=>map.invalidateSize(),50);
 }
 
@@ -393,7 +440,7 @@ function selectPlace(id,places){const list=places||window._places||[];const p=li
 
 function closeDetail(){const ds=document.getElementById("detail-section");ds.innerHTML="";ds.className="detail-section empty";selectedId=null;document.querySelectorAll(".place-item").forEach(el=>el.classList.remove("active"));}
 
-function renderDetail(p){const ds=document.getElementById("detail-section");const tags=p.osmTags||{};const amenityHTML=buildAmenityHTML(tags);ds.className="detail-section";ds.innerHTML=`<div class="photo-strip loading" id="photo-strip-${p.id}"><div class="photo-strip-placeholder"><span>🖼️</span>${t("photos_loading")}</div></div><div class="detail-body"><div class="detail-header"><div class="detail-icon">${p.icon}</div><div class="detail-meta"><div class="detail-name" id="detail-name">${esc(p.name)}</div>${p.addr?`<div class="detail-addr">${esc(p.addr)}</div>`:""}</div><button class="detail-close" onclick="closeDetail()" title="Close">✕</button></div><div class="detail-pills"><span class="d-pill dist">📏 ${fmtDist(p.dist)}</span><span class="d-pill route" id="route-pill">⏳ ${t("routing")}</span></div>${amenityHTML}<button class="nav-btn" onclick="openInMaps(${p.lat},${p.lng})">${t("nav_btn")}</button></div>`;loadPlacePhotos(p);}
+function renderDetail(p){const ds=document.getElementById("detail-section");const tags=p.osmTags||{};const amenityHTML=buildAmenityHTML(tags);const pinned=isPinned(p.id);ds.className="detail-section";ds.innerHTML=`<div class="photo-strip loading" id="photo-strip-${p.id}"><div class="photo-strip-placeholder"><span>🖼️</span>${t("photos_loading")}</div></div><div class="detail-body"><div class="detail-header"><div class="detail-icon">${p.icon}</div><div class="detail-meta"><div class="detail-name" id="detail-name">${esc(p.name)}</div>${p.addr?`<div class="detail-addr">${esc(p.addr)}</div>`:""}</div><button class="detail-close" onclick="closeDetail()" title="Close">✕</button></div><div class="detail-pills"><span class="d-pill dist">📏 ${fmtDist(p.dist)}</span><span class="d-pill route" id="route-pill">⏳ ${t("routing")}</span></div>${amenityHTML}<div class="detail-actions"><button class="nav-btn" onclick="openInMaps(${p.lat},${p.lng})">${t("nav_btn")}</button><button class="pin-btn${pinned?" pinned":""}" id="pin-btn-${p.id}" onclick="togglePin(${JSON.stringify({id:p.id,name:p.name,icon:p.icon,lat:p.lat,lng:p.lng,dist:p.dist,addr:p.addr||""}).replace(/"/g,'&quot;')})">📌 ${pinned?t("unpin"):t("pin")}</button></div></div>`;loadPlacePhotos(p);}
 
 const AMENITY_DEFS=[{key:"internet_access",vals:{wlan:"yes",yes:"yes"},emoji:"📶",cat:"net",label:{en:"Wi-Fi",th:"Wi-Fi",ja:"Wi-Fi",zh:"Wi-Fi",ko:"Wi-Fi"}},{key:"payment:qr_code",vals:{yes:"yes"},emoji:"📲",cat:"pay",label:{en:"QR Pay",th:"QR Code",ja:"QR払い",zh:"QR支付",ko:"QR 결제"}},{key:"payment:cash",vals:{yes:"yes"},emoji:"💵",cat:"pay",label:{en:"Cash",th:"เงินสด",ja:"現金",zh:"现金",ko:"현금"}},{key:"payment:credit_cards",vals:{yes:"yes"},emoji:"💳",cat:"pay",label:{en:"Credit Card",th:"บัตรเครดิต",ja:"カード",zh:"信用卡",ko:"신용카드"}},{key:"payment:debit_cards",vals:{yes:"yes"},emoji:"🏧",cat:"pay",label:{en:"Debit Card",th:"เดบิต",ja:"デビット",zh:"借记卡",ko:"체크카드"}},{key:"diet:halal",vals:{yes:"yes",only:"yes"},emoji:"☪️",cat:"food",label:{en:"Halal",th:"ฮาลาล",ja:"ハラール",zh:"清真",ko:"할랄"}},{key:"diet:vegetarian",vals:{yes:"yes",only:"yes"},emoji:"🥦",cat:"food",label:{en:"Vegetarian",th:"มังสวิรัติ",ja:"ベジタリアン",zh:"素食",ko:"채식"}},{key:"diet:vegan",vals:{yes:"yes",only:"yes"},emoji:"🌱",cat:"food",label:{en:"Vegan",th:"วีแกน",ja:"ヴィーガン",zh:"纯素",ko:"비건"}},{key:"takeaway",vals:{yes:"yes",only:"yes"},emoji:"🥡",cat:"food",label:{en:"Takeaway",th:"กลับบ้าน",ja:"テイクアウト",zh:"外卖",ko:"포장"}},{key:"delivery",vals:{yes:"yes"},emoji:"🛵",cat:"food",label:{en:"Delivery",th:"เดลิเวอรี่",ja:"デリバリー",zh:"外送",ko:"배달"}},{key:"dog",vals:{yes:"yes",leashed:"yes"},emoji:"🐾",cat:"place",label:{en:"Pet Friendly",th:"Pet Friendly",ja:"ペット可",zh:"宠物友好",ko:"반려동물"}},{key:"wheelchair",vals:{yes:"yes",limited:"yes"},emoji:"♿",cat:"place",label:{en:"Wheelchair",th:"รถเข็น",ja:"車いす",zh:"无障碍",ko:"휠체어"}},{key:"outdoor_seating",vals:{yes:"yes"},emoji:"🌳",cat:"place",label:{en:"Outdoor",th:"นั่งนอก",ja:"テラス",zh:"户外",ko:"야외석"}},{key:"smoking",vals:{yes:"yes",outside:"yes"},emoji:"🚬",cat:"place",label:{en:"Smoking",th:"สูบบุหรี่",ja:"喫煙可",zh:"可吸烟",ko:"흡연"}},{key:"parking",vals:{yes:"yes",surface:"yes"},emoji:"🅿️",cat:"place",label:{en:"Parking",th:"ที่จอดรถ",ja:"駐車場",zh:"停车场",ko:"주차장"}},{key:"toilets",vals:{yes:"yes"},emoji:"🚻",cat:"place",label:{en:"Restroom",th:"ห้องน้ำ",ja:"トイレ",zh:"洗手间",ko:"화장실"}}];
 const CAT_LABEL={net:{en:"Internet",th:"อินเทอร์เน็ต",ja:"ネット",zh:"网络",ko:"인터넷"},pay:{en:"Payment",th:"ชำระเงิน",ja:"支払い",zh:"支付",ko:"결제"},food:{en:"Food",th:"อาหาร",ja:"フード",zh:"餐饮",ko:"식음료"},place:{en:"Facilities",th:"สิ่งอำนวยฯ",ja:"施設",zh:"设施",ko:"편의시설"}};
@@ -418,12 +465,89 @@ function renderHistory(){const el=document.getElementById("history-list");if(!se
 
 function wCode2Icon(c){if(c===0)return"☀️";if(c<=2)return"⛅";if(c<=3)return"☁️";if(c<=48)return"🌫️";if(c<=57)return"🌦️";if(c<=67)return"🌧️";if(c<=77)return"❄️";if(c<=82)return"🌧️";if(c<=86)return"🌨️";if(c<=99)return"⛈️";return"🌡️";}
 function wCode2Desc(c){if(c===0)return"Clear sky";if(c<=2)return"Partly cloudy";if(c<=3)return"Overcast";if(c<=48)return"Foggy";if(c<=57)return"Drizzle";if(c<=67)return"Rain";if(c<=77)return"Snow";if(c<=82)return"Rain showers";if(c<=86)return"Snow showers";if(c<=99)return"Thunderstorm";return"Unknown";}
-async function loadWeather(){if(!userLat)return;const btn=document.getElementById("refresh-btn");btn.classList.add("spinning");try{const gd=await(await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`)).json();const city=gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||"Unknown";const cc=(gd.address?.country_code||"").toUpperCase();document.getElementById("w-city").textContent=city;document.getElementById("w-location").innerHTML=`${cc} · ${userLat.toFixed(3)}, ${userLng.toFixed(3)}`;}catch(e){document.getElementById("w-city").textContent="Your Location";}try{const url=`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility,cloud_cover,uv_index&hourly=temperature_2m,weather_code,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&timezone=auto&forecast_days=1`;const d=await(await fetch(url)).json();const c=d.current,dy=d.daily;document.getElementById("w-temp").innerHTML=`${Math.round(c.temperature_2m)}<span class="w-temp-unit">°C</span>`;document.getElementById("w-icon").textContent=wCode2Icon(c.weather_code);document.getElementById("w-desc").textContent=wCode2Desc(c.weather_code);document.getElementById("w-feels").textContent=`${t("feels_like")} ${Math.round(c.apparent_temperature)}°C`;document.getElementById("w-range").textContent=`${Math.round(dy.temperature_2m_min[0])}° / ${Math.round(dy.temperature_2m_max[0])}°`;document.getElementById("w-humid").textContent=c.relative_humidity_2m+"%";document.getElementById("w-wind").textContent=Math.round(c.wind_speed_10m)+" km/h";document.getElementById("w-vis").textContent=c.visibility>=1000?(c.visibility/1000).toFixed(0)+" km":c.visibility+" m";document.getElementById("w-pressure").textContent=Math.round(c.surface_pressure)+" hPa";document.getElementById("w-updated").textContent=t("last_updated")+" "+new Date().toLocaleTimeString();const uv=c.uv_index??dy.uv_index_max?.[0]??0;document.getElementById("s-uv").textContent=Math.round(uv);document.getElementById("s-uv").style.color=uv<3?"var(--green)":uv<6?"var(--yellow)":"var(--red)";document.getElementById("s-uv-lbl").textContent=uv<3?t("uv_low"):uv<6?t("uv_mod"):uv<8?t("uv_high"):t("uv_vhigh");document.getElementById("s-uv-bar").style.cssText=`width:${Math.min(uv/11*100,100)}%;background:${uv<3?"var(--green)":uv<6?"var(--yellow)":"var(--red)"}`;const rain=dy.precipitation_probability_max?.[0]??0;document.getElementById("s-rain").textContent=rain+"%";document.getElementById("s-rain-lbl").textContent=rain<30?t("rain_unlikely"):rain<60?t("rain_possible"):t("rain_likely");document.getElementById("s-rain-bar").style.width=rain+"%";const sr=dy.sunrise?.[0]?new Date(dy.sunrise[0]).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—";const ss=dy.sunset?.[0]?new Date(dy.sunset[0]).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—";document.getElementById("s-sunrise").textContent=sr;document.getElementById("s-sunset").textContent=t("sunrise")+" "+ss;const cl=c.cloud_cover??0;document.getElementById("s-cloud").textContent=cl+"%";document.getElementById("s-cloud-bar").style.width=cl+"%";renderHourly(d.hourly);drawTempGraph(d.hourly);weatherLoaded=true;}catch(e){document.getElementById("w-desc").textContent="Could not load weather data.";}btn.classList.remove("spinning");}
+async function loadWeather(){if(!userLat)return;const btn=document.getElementById("refresh-btn");btn.classList.add("spinning");try{const gd=await(await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`)).json();const city=gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||"Unknown";const cc=(gd.address?.country_code||"").toUpperCase();document.getElementById("w-city").textContent=city;document.getElementById("w-location").innerHTML=`${cc} · ${userLat.toFixed(3)}, ${userLng.toFixed(3)}`;updateLocationCard(gd,userLat,userLng);}catch(e){document.getElementById("w-city").textContent="Your Location";}try{const url=`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility,cloud_cover,uv_index&hourly=temperature_2m,weather_code,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&timezone=auto&forecast_days=1`;const d=await(await fetch(url)).json();const c=d.current,dy=d.daily;document.getElementById("w-temp").innerHTML=`${Math.round(c.temperature_2m)}<span class="w-temp-unit">°C</span>`;document.getElementById("w-icon").textContent=wCode2Icon(c.weather_code);document.getElementById("w-desc").textContent=wCode2Desc(c.weather_code);document.getElementById("w-feels").textContent=`${t("feels_like")} ${Math.round(c.apparent_temperature)}°C`;document.getElementById("w-range").textContent=`${Math.round(dy.temperature_2m_min[0])}° / ${Math.round(dy.temperature_2m_max[0])}°`;document.getElementById("w-humid").textContent=c.relative_humidity_2m+"%";document.getElementById("w-wind").textContent=Math.round(c.wind_speed_10m)+" km/h";document.getElementById("w-vis").textContent=c.visibility>=1000?(c.visibility/1000).toFixed(0)+" km":c.visibility+" m";document.getElementById("w-pressure").textContent=Math.round(c.surface_pressure)+" hPa";document.getElementById("w-updated").textContent=t("last_updated")+" "+new Date().toLocaleTimeString();const uv=c.uv_index??dy.uv_index_max?.[0]??0;document.getElementById("s-uv").textContent=Math.round(uv);document.getElementById("s-uv").style.color=uv<3?"var(--green)":uv<6?"var(--yellow)":"var(--red)";document.getElementById("s-uv-lbl").textContent=uv<3?t("uv_low"):uv<6?t("uv_mod"):uv<8?t("uv_high"):t("uv_vhigh");document.getElementById("s-uv-bar").style.cssText=`width:${Math.min(uv/11*100,100)}%;background:${uv<3?"var(--green)":uv<6?"var(--yellow)":"var(--red)"}`;const rain=dy.precipitation_probability_max?.[0]??0;document.getElementById("s-rain").textContent=rain+"%";document.getElementById("s-rain-lbl").textContent=rain<30?t("rain_unlikely"):rain<60?t("rain_possible"):t("rain_likely");document.getElementById("s-rain-bar").style.width=rain+"%";const sr=dy.sunrise?.[0]?new Date(dy.sunrise[0]).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—";const ss=dy.sunset?.[0]?new Date(dy.sunset[0]).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—";document.getElementById("s-sunrise").textContent=sr;document.getElementById("s-sunset").textContent=t("sunrise")+" "+ss;const cl=c.cloud_cover??0;document.getElementById("s-cloud").textContent=cl+"%";document.getElementById("s-cloud-bar").style.width=cl+"%";renderHourly(d.hourly);drawTempGraph(d.hourly);weatherLoaded=true;}catch(e){document.getElementById("w-desc").textContent="Could not load weather data.";}btn.classList.remove("spinning");}
 function renderHourly(h){const now=new Date(),ch=now.getHours(),items=[];for(let i=0;i<24;i++){const hr=(ch+i)%24;const idx=h.time.findIndex(t=>new Date(t).getHours()===hr&&(i===0||new Date(t)>now));if(idx===-1)continue;items.push({label:i===0?"Now":hr+":00",icon:wCode2Icon(h.weather_code[idx]),temp:Math.round(h.temperature_2m[idx]),now:i===0});if(items.length>=12)break;}document.getElementById("hourly-row").innerHTML=items.map(x=>`<div class="hour-card${x.now?" now":""}"><div class="hour-time">${x.label}</div><div class="hour-ico">${x.icon}</div><div class="hour-tmp">${x.temp}°</div></div>`).join("");}
 function drawTempGraph(h){const canvas=document.getElementById("temp-canvas");const ctx=canvas.getContext("2d");const dpr=window.devicePixelRatio||1;const W=canvas.offsetWidth||300,H=80;canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);const temps=h.temperature_2m.slice(0,24);const mn=Math.min(...temps)-2,mx=Math.max(...temps)+2;const px=i=>(i/(temps.length-1))*W;const py=t=>H-((t-mn)/(mx-mn))*(H-18)-9;const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(56,189,248,.2)");g.addColorStop(1,"rgba(56,189,248,0)");ctx.beginPath();ctx.moveTo(px(0),py(temps[0]));for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}ctx.lineTo(px(temps.length-1),H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.moveTo(px(0),py(temps[0]));for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#64748b";ctx.font="10px DM Mono,monospace";ctx.textAlign="center";[0,6,12,18,23].forEach(i=>{if(i<temps.length)ctx.fillText(Math.round(temps[i])+"°",px(i),py(temps[i])-4);});}
 
-setInterval(()=>{if(userLat&&document.getElementById("page-dashboard").classList.contains("active"))loadWeather();},600000);
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+// ══ SAVED PLACES ══
+const SAVED_KEY = "nb_saved";
+function getSaved(){ try{ return JSON.parse(localStorage.getItem(SAVED_KEY)||"[]"); }catch{ return []; } }
+function saveSaved(arr){ localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); }
+function isPinned(id){ return getSaved().some(s=>String(s.id)===String(id)); }
+function togglePin(p){
+  let saved = getSaved();
+  const idx = saved.findIndex(s=>String(s.id)===String(p.id));
+  if(idx>=0){ saved.splice(idx,1); }
+  else { saved.unshift({id:p.id,name:p.name,icon:p.icon,lat:p.lat,lng:p.lng,dist:p.dist,addr:p.addr||"",pinned:Date.now()}); if(saved.length>30)saved=saved.slice(0,30); }
+  saveSaved(saved);
+  // update pin button
+  const btn = document.getElementById("pin-btn-"+p.id);
+  if(btn){ const pinned=isPinned(p.id); btn.classList.toggle("pinned",pinned); btn.innerHTML=`📌 ${pinned?t("unpin"):t("pin")}`; }
+  // re-render saved list if dashboard visible
+  if(document.getElementById("page-dashboard").classList.contains("active")) renderSaved();
+}
+function renderSaved(){
+  const el = document.getElementById("saved-list"); if(!el)return;
+  const saved = getSaved();
+  if(!saved.length){ el.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:6px 0;">${t("no_saved")}</div>`; return; }
+  el.innerHTML = saved.map(s=>`
+    <div class="saved-item" onclick="jumpToSaved(${s.lat},${s.lng})">
+      <div class="saved-ico">${s.icon}</div>
+      <div class="saved-info">
+        <div class="saved-name">${esc(s.name)}</div>
+        <div class="saved-meta">${s.addr||fmtDist(s.dist)}</div>
+      </div>
+      <button class="saved-del" onclick="event.stopPropagation();removeSaved('${s.id}')" title="Remove">✕</button>
+    </div>`).join("");
+}
+function removeSaved(id){
+  const saved = getSaved().filter(s=>String(s.id)!==String(id));
+  saveSaved(saved); renderSaved();
+  // update pin btn if detail open
+  const btn = document.getElementById("pin-btn-"+id);
+  if(btn){ btn.classList.remove("pinned"); btn.innerHTML=`📌 ${t("pin")}`; }
+}
+function jumpToSaved(lat,lng){
+  showPage("radar");
+  if(map){ map.setView([lat,lng],17); }
+}
+
+// ══ DASHBOARD MINI MAP ══
+let dashMap = null;
+function initDashMap(lat,lng){
+  if(dashMap){ dashMap.setView([lat,lng],15); return; }
+  dashMap = L.map("dash-mini-map",{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([lat,lng],15);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(dashMap);
+  const ui = L.divIcon({html:'<div class="user-pulse"></div>',className:"",iconSize:[14,14],iconAnchor:[7,7]});
+  L.marker([lat,lng],{icon:ui}).addTo(dashMap);
+  // tap to open radar
+  dashMap.on("click",()=>showPage("radar"));
+}
+
+// ══ LOCATION DETAIL (called after geocode) ══
+function updateLocationCard(gd, lat, lng){
+  const addr = gd.address||{};
+  const country = addr.country || addr.country_code?.toUpperCase() || "—";
+  const city = addr.city||addr.town||addr.village||addr.county||"—";
+  const district = addr.suburb||addr.neighbourhood||addr.district||"";
+  const road = addr.road||addr.pedestrian||"";
+  const postcode = addr.postcode||"";
+  // full display name — road / city
+  const fullname = [road, city].filter(Boolean).join(", ") || gd.display_name?.split(",").slice(0,2).join(",") || "—";
+  document.getElementById("loc-fullname").textContent = fullname;
+  document.getElementById("loc-country").textContent = country;
+  document.getElementById("loc-coords").textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  const dp = document.getElementById("loc-district");
+  if(district){ dp.textContent = district; dp.style.display=""; }
+  else { dp.style.display="none"; }
+  const pp = document.getElementById("loc-postcode");
+  if(postcode){ pp.textContent = postcode; pp.style.display=""; }
+  else { pp.style.display="none"; }
+  initDashMap(lat,lng);
+}
+
+setInterval(()=>{ if(userLat&&document.getElementById("page-dashboard").classList.contains("active"))loadWeather(); },600000);
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 applyLang();
 getLocation();
 </script>
