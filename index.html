@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080b12"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>NearBy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080b12;
+      --surface: #0e1320;
+      --surface2: #151d2e;
+      --surface3: #1c2640;
+      --border: #1e2a42;
+      --border2: #253350;
+      --accent: #3dd6f5;
+      --accent-dim: rgba(61,214,245,0.12);
+      --accent2: #f5a53d;
+      --green: #3df5a5;
+      --red: #f5503d;
+      --text: #dde6f8;
+      --text2: #7a8eab;
+      --text3: #3a4d6a;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+    /* ─ Layout ─ */
+    #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+
+    /* ─ Header ─ */
+    .header {
+      flex-shrink: 0;
+      padding: calc(var(--safe-top) + 14px) 18px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .logo sup {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--text3);
+      letter-spacing: 1px;
+      font-family: 'DM Mono', monospace;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+
+    /* ─ Controls panel ─ */
+    .controls {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-group {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    select, .range-input {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    select:focus, .range-input:focus { border-color: var(--accent); }
+
+    .select-wrap {
+      position: relative;
+      flex: 2;
+      min-width: 0;
+    }
+
+    .select-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      pointer-events: none;
+      font-size: 11px;
+    }
+
+    .select-wrap select { width: 100%; padding-right: 28px; }
+
+    .range-wrap {
+      display: flex;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      overflow: hidden;
+      flex: 1.2;
+      min-width: 0;
+    }
+
+    .range-wrap input[type="number"] {
+      background: none;
+      border: none;
+      border-radius: 0;
+      padding: 9px 8px 9px 12px;
+      width: 60px;
+      min-width: 0;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+    }
+
+    .range-wrap input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .unit-toggle {
+      display: flex;
+      border-left: 1px solid var(--border2);
+    }
+
+    .unit-btn {
+      background: none;
+      border: none;
+      color: var(--text3);
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      padding: 0 8px;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+
+    .unit-btn.active { color: var(--accent); background: var(--accent-dim); }
+
+    .search-btn {
+      background: var(--accent);
+      color: #080b12;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .search-btn:active { transform: scale(0.96); }
+    .search-btn:disabled { background: var(--surface3); color: var(--text3); cursor: default; transform: none; }
+
+    /* ─ Map ─ */
+    #map {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .leaflet-container { background: #0a0f1a !important; }
+
+    /* ─ Results panel (bottom sheet) ─ */
+    .results-panel {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      max-height: 38vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .results-panel::-webkit-scrollbar { width: 3px; }
+    .results-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    .results-header {
+      padding: 10px 16px 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 2;
+    }
+
+    .results-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .results-count {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(61,214,245,0.2);
+    }
+
+    .place-list { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 4px; }
+
+    .place-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .place-item:hover, .place-item:active { background: var(--surface2); border-color: var(--border); }
+    .place-item.active { background: var(--accent-dim); border-color: rgba(61,214,245,0.3); }
+
+    .place-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--surface3);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      border: 1px solid var(--border2);
+    }
+
+    .place-info { flex: 1; min-width: 0; }
+
+    .place-name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .place-addr {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .place-dist {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--accent2);
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* ─ Info card (selected) ─ */
+    .info-card {
+      margin: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 14px;
+      display: none;
+    }
+
+    .info-card.visible { display: block; }
+
+    .info-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .info-icon { font-size: 28px; flex-shrink: 0; }
+    .info-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; line-height: 1.2; }
+    .info-addr { font-size: 12px; color: var(--text2); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+    .info-stats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-pill {
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .stat-pill.dist { color: var(--accent2); border-color: rgba(245,165,61,0.3); background: rgba(245,165,61,0.08); }
+    .stat-pill.route { color: var(--green); border-color: rgba(61,245,165,0.3); background: rgba(61,245,165,0.08); }
+
+    .route-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #080b12;
+      border: none;
+      border-radius: 9px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+
+    .route-btn:active { background: #5ee8ff; }
+
+    /* ─ Status / loading ─ */
+    .status-bar {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text2);
+      pointer-events: none;
+      white-space: nowrap;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .status-bar.visible { display: block; }
+    .status-bar.error { color: var(--red); border-color: rgba(245,80,61,0.3); }
+    .status-bar.success { color: var(--green); border-color: rgba(61,245,165,0.3); }
+
+    /* ─ Empty state ─ */
+    .empty-state {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    /* Leaflet dark overrides */
+    .leaflet-tile { filter: brightness(0.75) saturate(0.6) hue-rotate(180deg) invert(1); }
+    .leaflet-control-zoom a { background: var(--surface2) !important; color: var(--text2) !important; border-color: var(--border2) !important; }
+    .leaflet-control-zoom a:hover { background: var(--surface3) !important; color: var(--accent) !important; }
+    .leaflet-popup-content-wrapper { background: var(--surface2) !important; color: var(--text) !important; border: 1px solid var(--border2); box-shadow: 0 8px 32px rgba(0,0,0,0.6); border-radius: 10px !important; }
+    .leaflet-popup-tip { background: var(--surface2) !important; }
+    .leaflet-popup-content { font-family: 'DM Sans', sans-serif; font-size: 13px; margin: 10px 14px !important; }
+
+    /* Pulse animation for user location */
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.6);opacity:0} }
+    .user-pulse { width: 14px; height: 14px; background: var(--accent); border-radius: 50%; border: 2px solid #fff; position: relative; }
+    .user-pulse::after { content:''; position:absolute; inset:-6px; border-radius:50%; background:rgba(61,214,245,0.3); animation: pulse 2s infinite; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <div class="logo">NearBy<sup>RADAR</sup></div>
+    <div id="loc-status" style="margin-left:auto;font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)">locating…</div>
+  </header>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="select-wrap">
+        <select id="place-type">
+          <option value="restaurant">🍜 Restaurant</option>
+          <option value="cafe">☕ Café / Coffee</option>
+          <option value="bar">🍺 Bar</option>
+          <option value="convenience">🏪 Convenience / 7-11</option>
+          <option value="pharmacy">💊 Pharmacy</option>
+          <option value="hospital">🏥 Hospital</option>
+          <option value="supermarket">🛒 Supermarket</option>
+          <option value="atm">💳 ATM</option>
+          <option value="gas_station">⛽ Gas Station</option>
+          <option value="hotel">🏨 Hotel</option>
+          <option value="tourist_attraction">🗺️ Attraction</option>
+          <option value="park">🌿 Park</option>
+          <option value="shopping_mall">🛍️ Shopping Mall</option>
+          <option value="bank">🏦 Bank</option>
+          <option value="bus_station">🚌 Bus Station</option>
+        </select>
+      </div>
+
+      <div class="range-wrap">
+        <input type="number" id="range-val" value="500" min="50" max="50000" />
+        <div class="unit-toggle">
+          <button class="unit-btn active" data-unit="m">m</button>
+          <button class="unit-btn" data-unit="km">km</button>
+          <button class="unit-btn" data-unit="mi">mi</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="search-btn" id="search-btn" onclick="doSearch()" disabled>Search</button>
+  </div>
+
+  <div id="map">
+    <div class="status-bar" id="status-bar">Locating…</div>
+  </div>
+
+  <div class="results-panel" id="results-panel">
+    <div class="results-header">
+      <span class="results-title">Results</span>
+      <span class="results-count" id="results-count">0</span>
+    </div>
+    <div class="place-list" id="place-list">
+      <div class="empty-state">Search for nearby places to see results here.</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── State ───
+let map, userMarker, userLat, userLng, routeLayer, placeMarkers = [], selectedId = null;
+let unit = "m";
+
+// ─── OSM type mapping ───
+const TYPE_MAP = {
+  restaurant:         { amenity: "restaurant",         icon: "🍜", label: "Restaurant" },
+  cafe:               { amenity: "cafe",                icon: "☕", label: "Café" },
+  bar:                { amenity: "bar",                 icon: "🍺", label: "Bar" },
+  convenience:        { shop: "convenience",            icon: "🏪", label: "Convenience" },
+  pharmacy:           { amenity: "pharmacy",            icon: "💊", label: "Pharmacy" },
+  hospital:           { amenity: "hospital",            icon: "🏥", label: "Hospital" },
+  supermarket:        { shop: "supermarket",            icon: "🛒", label: "Supermarket" },
+  atm:                { amenity: "atm",                 icon: "💳", label: "ATM" },
+  gas_station:        { amenity: "fuel",                icon: "⛽", label: "Gas Station" },
+  hotel:              { tourism: "hotel",               icon: "🏨", label: "Hotel" },
+  tourist_attraction: { tourism: "attraction",          icon: "🗺️", label: "Attraction" },
+  park:               { leisure: "park",                icon: "🌿", label: "Park" },
+  shopping_mall:      { shop: "mall",                   icon: "🛍️", label: "Mall" },
+  bank:               { amenity: "bank",                icon: "🏦", label: "Bank" },
+  bus_station:        { amenity: "bus_station",         icon: "🚌", label: "Bus Station" },
+};
+
+// ─── Unit helpers ───
+function toMeters(val, u) {
+  if (u === "km") return val * 1000;
+  if (u === "mi") return val * 1609.34;
+  return val;
+}
+
+function fmtDist(meters) {
+  if (meters < 1000) return Math.round(meters) + " m";
+  return (meters / 1000).toFixed(1) + " km";
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000, toR = x => x * Math.PI / 180;
+  const dLat = toR(lat2 - lat1), dLon = toR(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ─── Status bar ───
+function showStatus(msg, type = "", duration = 0) {
+  const el = document.getElementById("status-bar");
+  el.textContent = msg;
+  el.className = "status-bar visible" + (type ? " " + type : "");
+  if (duration) setTimeout(() => el.classList.remove("visible"), duration);
+}
+function hideStatus() { document.getElementById("status-bar").classList.remove("visible"); }
+
+// ─── Map init ───
+function initMap(lat, lng) {
+  map = L.map("map", { zoomControl: true, attributionControl: false }).setView([lat, lng], 15);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+
+  // User marker
+  const userIcon = L.divIcon({
+    html: '<div class="user-pulse"></div>',
+    className: "", iconSize: [14, 14], iconAnchor: [7, 7]
+  });
+  userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+  userMarker.bindPopup("<b>📍 You are here</b>");
+}
+
+// ─── Get location ───
+function getLocation() {
+  if (!navigator.geolocation) {
+    showStatus("Geolocation not supported", "error");
+    return;
+  }
+  showStatus("📡 Locating you…");
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    document.getElementById("loc-status").textContent = "📍 Located";
+    document.getElementById("loc-status").style.color = "var(--green)";
+    document.getElementById("search-btn").disabled = false;
+    initMap(userLat, userLng);
+    hideStatus();
+  }, err => {
+    showStatus("⚠️ Location denied — enable GPS", "error");
+    document.getElementById("loc-status").textContent = "⚠️ No GPS";
+    // fallback center
+    userLat = 13.7563; userLng = 100.5018; // Bangkok default
+    initMap(userLat, userLng);
+    document.getElementById("search-btn").disabled = false;
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+// ─── Search ───
+async function doSearch() {
+  if (!userLat) return;
+  const typeKey = document.getElementById("place-type").value;
+  const rangeVal = parseFloat(document.getElementById("range-val").value) || 500;
+  const radiusM = Math.round(toMeters(rangeVal, unit));
+  const typeInfo = TYPE_MAP[typeKey];
+
+  // Build Overpass query
+  const key = Object.keys(typeInfo).find(k => k !== "icon" && k !== "label");
+  const val = typeInfo[key];
+  const query = `
+    [out:json][timeout:20];
+    (
+      node["${key}"="${val}"](around:${radiusM},${userLat},${userLng});
+      way["${key}"="${val}"](around:${radiusM},${userLat},${userLng});
+    );
+    out center 40;
+  `;
+
+  showStatus("🔍 Searching…");
+  document.getElementById("search-btn").disabled = true;
+
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: query
+    });
+    const data = await res.json();
+    document.getElementById("search-btn").disabled = false;
+    renderResults(data.elements, typeInfo, radiusM);
+  } catch(e) {
+    document.getElementById("search-btn").disabled = false;
+    showStatus("⚠️ Search failed — check connection", "error", 3000);
+  }
+}
+
+// ─── Render results ───
+function renderResults(elements, typeInfo, radiusM) {
+  // Clear old markers
+  placeMarkers.forEach(m => map.removeLayer(m));
+  placeMarkers = [];
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+  selectedId = null;
+
+  const places = elements.map(el => {
+    const lat = el.lat ?? el.center?.lat;
+    const lng = el.lon ?? el.center?.lon;
+    if (!lat || !lng) return null;
+    const dist = haversine(userLat, userLng, lat, lng);
+    return {
+      id: el.id,
+      name: el.tags?.name || typeInfo.label,
+      addr: [el.tags?.["addr:street"], el.tags?.["addr:housenumber"]].filter(Boolean).join(" ") || el.tags?.["addr:full"] || "",
+      lat, lng, dist,
+      icon: typeInfo.icon
+    };
+  }).filter(Boolean).sort((a,b) => a.dist - b.dist);
+
+  document.getElementById("results-count").textContent = places.length;
+
+  if (places.length === 0) {
+    document.getElementById("place-list").innerHTML = `<div class="empty-state">No ${typeInfo.label.toLowerCase()} found within ${fmtDist(radiusM)}.<br>Try increasing the range.</div>`;
+    hideStatus();
+    return;
+  }
+
+  // Add markers
+  places.forEach(p => {
+    const icon = L.divIcon({
+      html: `<div style="background:var(--surface2);border:2px solid var(--border2);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.6)">${p.icon}</div>`,
+      className: "", iconSize: [32,32], iconAnchor: [16,16]
+    });
+    const m = L.marker([p.lat, p.lng], { icon }).addTo(map);
+    m.on("click", () => selectPlace(p.id, places));
+    placeMarkers.push(m);
+  });
+
+  // Fit map
+  const all = [[userLat, userLng], ...places.slice(0,10).map(p=>[p.lat,p.lng])];
+  map.fitBounds(L.latLngBounds(all), { padding: [40,40] });
+
+  // Render list
+  document.getElementById("place-list").innerHTML = places.map(p => `
+    <div class="place-item" id="pi-${p.id}" onclick="selectPlace('${p.id}', null)">
+      <div class="place-icon">${p.icon}</div>
+      <div class="place-info">
+        <div class="place-name">${esc(p.name)}</div>
+        ${p.addr ? `<div class="place-addr">${esc(p.addr)}</div>` : ""}
+      </div>
+      <div class="place-dist">${fmtDist(p.dist)}</div>
+    </div>
+  `).join("");
+
+  // Store for later
+  window._places = places;
+  showStatus(`✓ Found ${places.length} places`, "success", 2500);
+}
+
+// ─── Select place & route ───
+function selectPlace(id, places) {
+  const list = places || window._places || [];
+  const p = list.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  // Update active state
+  document.querySelectorAll(".place-item").forEach(el => el.classList.remove("active"));
+  const item = document.getElementById("pi-" + id);
+  if (item) { item.classList.add("active"); item.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+
+  // Draw route
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+
+  routeLayer = L.polyline(
+    [[userLat, userLng], [p.lat, p.lng]],
+    { color: "#3dd6f5", weight: 3, opacity: 0.85, dashArray: "8 6" }
+  ).addTo(map);
+
+  map.fitBounds(routeLayer.getBounds(), { padding: [60,60] });
+
+  // Show info in results panel header area
+  const panel = document.getElementById("results-panel");
+  let card = document.getElementById("info-card");
+  if (!card) {
+    card = document.createElement("div");
+    card.id = "info-card";
+    card.className = "info-card visible";
+    panel.insertBefore(card, panel.querySelector(".results-header"));
+  } else {
+    card.className = "info-card visible";
+  }
+
+  card.innerHTML = `
+    <div class="info-top">
+      <div class="info-icon">${p.icon}</div>
+      <div>
+        <div class="info-name">${esc(p.name)}</div>
+        ${p.addr ? `<div class="info-addr">${esc(p.addr)}</div>` : ""}
+      </div>
+    </div>
+    <div class="info-stats">
+      <div class="stat-pill dist">📏 ${fmtDist(p.dist)}</div>
+      <div class="stat-pill route">↗ Straight line</div>
+    </div>
+    <button class="route-btn" onclick="openInMaps(${p.lat},${p.lng})">
+      🧭 Open Navigation
+    </button>
+  `;
+
+  selectedId = id;
+
+  // Pan map marker
+  map.panTo([p.lat, p.lng], { animate: true });
+}
+
+function openInMaps(lat, lng) {
+  // Opens Google Maps navigation from current location to place
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${lat},${lng}&travelmode=walking`, "_blank");
+}
+
+// ─── Unit toggle ───
+document.querySelectorAll(".unit-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".unit-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    unit = btn.dataset.unit;
+    // Update placeholder hint
+    const inp = document.getElementById("range-val");
+    if (unit === "m")  inp.value = 500;
+    if (unit === "km") inp.value = 1;
+    if (unit === "mi") inp.value = 0.5;
+  });
+});
+
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ─── Boot ───
+getLocation();
+</script>
+</body>
+</html>
