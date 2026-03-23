@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NearBy — Map Amenities</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b24;
+  --surface2: #1e2638;
+  --border:   rgba(255,255,255,0.08);
+  --text:     #dce3f0;
+  --muted:    #667085;
+  --accent:   #3b82f6;
+  --green:    #22c55e;
+  --yellow:   #eab308;
+  --red:      #ef4444;
+  --orange:   #f97316;
+  --r:        16px;
+  --sheet-h:  88vh;
+}
+
+html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'Noto Sans Thai', sans-serif; }
+
+/* ── MAP ── */
+#map {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+/* Leaflet dark tiles override */
+.leaflet-tile { filter: brightness(0.85) saturate(0.7); }
+
+/* ── TOP BAR ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 400;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(to bottom, rgba(13,17,23,0.95) 60%, transparent);
+  pointer-events: none;
+}
+
+.topbar-logo {
+  pointer-events: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 15px; font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 7px 14px; border-radius: 10px;
+  letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 7px;
+}
+
+.topbar-logo .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.topbar-hint {
+  pointer-events: none;
+  font-size: 12px; color: var(--muted);
+  background: rgba(13,17,23,0.75);
+  padding: 6px 12px; border-radius: 8px;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+}
+
+/* ── CUSTOM MARKER ── */
+.marker-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+  transition: transform 0.15s;
+}
+
+.marker-wrap:hover { transform: scale(1.15); }
+.marker-wrap.active { transform: scale(1.2); }
+
+.marker-pin {
+  width: 42px; height: 42px; border-radius: 50% 50% 50% 4px;
+  transform: rotate(-45deg);
+  display: flex; align-items: center; justify-content: center;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s;
+}
+
+.marker-pin.active {
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.4), 0 4px 16px rgba(0,0,0,0.5);
+  border-color: var(--accent);
+}
+
+.marker-emoji {
+  transform: rotate(45deg);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.marker-label {
+  margin-top: 4px;
+  background: rgba(13,17,23,0.85);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 6px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── BOTTOM SHEET ── */
+#sheet-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0);
+  pointer-events: none;
+  transition: background 0.3s;
+}
+
+#sheet-overlay.open {
+  background: rgba(0,0,0,0.45);
+  pointer-events: auto;
+}
+
+#sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 600;
+  background: var(--surface);
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  max-height: var(--sheet-h);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateY(110%);
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -12px 60px rgba(0,0,0,0.5);
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+}
+#sheet::-webkit-scrollbar { display: none; }
+
+#sheet.open {
+  transform: translateY(0);
+}
+
+/* drag handle */
+.sheet-handle {
+  width: 38px; height: 4px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+/* ── SHEET CONTENT ── */
+.sheet-hero {
+  padding: 14px 18px 0;
+  display: flex; gap: 13px; align-items: flex-start;
+}
+
+.sheet-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.sheet-meta { flex: 1; min-width: 0; }
+
+.sheet-name {
+  font-size: 17px; font-weight: 700; color: var(--text);
+  line-height: 1.25; margin-bottom: 3px;
+}
+
+.sheet-type {
+  font-size: 12px; color: var(--muted); margin-bottom: 8px;
+}
+
+.sheet-badges {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+}
+
+.meta-pill.open  { color: var(--green);  background: rgba(34,197,94,0.1);  border-color: rgba(34,197,94,0.25); }
+.meta-pill.close { color: var(--red);    background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.25); }
+.meta-pill.star  { color: var(--yellow); background: rgba(234,179,8,0.1);   border-color: rgba(234,179,8,0.25); }
+.meta-pill.dist  { color: #a78bfa;       background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.25); }
+
+/* ── SCORE ROW ── */
+.score-row {
+  margin: 14px 18px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.score-label { font-size: 11px; color: var(--muted); white-space: nowrap; font-family: 'DM Mono', monospace; }
+
+.score-track {
+  flex: 1; height: 6px; background: var(--surface2);
+  border-radius: 10px; overflow: hidden;
+}
+
+.score-fill {
+  height: 100%; border-radius: 10px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+}
+
+.score-pct { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
+
+/* ── SECTION HEADERS ── */
+.section-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 18px 18px 8px;
+  font-family: 'DM Mono', monospace;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.section-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ── AMENITY GRID ── */
+.amenity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  padding: 0 18px;
+}
+
+.amenity-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px; border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  transition: background 0.15s;
+}
+
+.amenity-item.yes {
+  background: rgba(34,197,94,0.07);
+  border-color: rgba(34,197,94,0.2);
+}
+
+.amenity-item.no {
+  opacity: 0.42;
+}
+
+.amenity-item.unknown {
+  background: rgba(234,179,8,0.05);
+  border-color: rgba(234,179,8,0.15);
+}
+
+.amenity-emoji { font-size: 17px; line-height: 1; flex-shrink: 0; }
+
+.amenity-text { flex: 1; min-width: 0; }
+
+.amenity-name {
+  font-size: 12px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.amenity-status {
+  font-size: 10px; margin-top: 1px;
+}
+
+.amenity-item.yes    .amenity-status { color: var(--green); }
+.amenity-item.no     .amenity-status { color: var(--red); }
+.amenity-item.unknown .amenity-status { color: var(--yellow); }
+
+.amenity-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+
+.amenity-item.yes .amenity-dot     { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.amenity-item.no .amenity-dot      { background: var(--surface2); border: 1px solid var(--muted); }
+.amenity-item.unknown .amenity-dot { background: var(--yellow); }
+
+/* ── ACTION BUTTONS ── */
+.actions {
+  display: flex; gap: 8px;
+  padding: 18px 18px 32px;
+}
+
+.btn {
+  flex: 1; padding: 13px; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+  font-family: 'Noto Sans Thai', sans-serif;
+  cursor: pointer; border: none;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); opacity: 0.85; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 0 18px; }
+
+/* ── NO PLACE HINT ── */
+.hint-bubble {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 450;
+  background: rgba(22,27,36,0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px; padding: 10px 18px; border-radius: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.hint-bubble.hidden { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="dot"></div>
+    NearBy
+  </div>
+  <div class="topbar-hint">📍 แตะไอคอนเพื่อดูรายละเอียด</div>
+</div>
+
+<!-- HINT (fades after tap) -->
+<div class="hint-bubble" id="hint">👆 แตะที่ไอคอนสถานที่เพื่อดูบริการ</div>
+
+<!-- OVERLAY (close sheet) -->
+<div id="sheet-overlay" onclick="closeSheet()"></div>
+
+<!-- BOTTOM SHEET -->
+<div id="sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheet-body"><!-- injected --></div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────
+const PLACES = [
+  {
+    id:1, name:'The Brew Lab', type:'Café / Coffee', emoji:'☕',
+    color:'#78350f', bg:'#fef3c7',
+    lat:13.7563, lng:100.5018, rating:4.7, dist:'0.3 km', open:true,
+    a:{ wifi:true, parking:true, takeaway:true, delivery:true, qrpay:true, cash:true, card:true,
+        petfriendly:true, halal:null, veggie:null, ac:true, outdoor:true, toilet:true,
+        wheelchair:false, smoke:false, charging:true }
+  },
+  {
+    id:2, name:'ข้าวมันไก่ นายโต', type:'Restaurant', emoji:'🍜',
+    color:'#7f1d1d', bg:'#fee2e2',
+    lat:13.7510, lng:100.5060, rating:4.5, dist:'0.6 km', open:true,
+    a:{ wifi:false, parking:true, takeaway:true, delivery:true, qrpay:true, cash:true, card:false,
+        petfriendly:false, halal:true, veggie:false, ac:true, outdoor:false, toilet:true,
+        wheelchair:null, smoke:false, charging:false }
+  },
+  {
+    id:3, name:'Rooftop Bar 33', type:'Bar', emoji:'🍺',
+    color:'#1e3a5f', bg:'#dbeafe',
+    lat:13.7590, lng:100.4960, rating:4.3, dist:'1.1 km', open:true,
+    a:{ wifi:true, parking:false, takeaway:false, delivery:false, qrpay:true, cash:true, card:true,
+        petfriendly:true, halal:false, veggie:null, ac:false, outdoor:true, toilet:true,
+        wheelchair:false, smoke:true, charging:true }
+  },
+  {
+    id:4, name:'Green Bowl Salad', type:'Healthy Food', emoji:'🥗',
+    color:'#14532d', bg:'#dcfce7',
+    lat:13.7530, lng:100.4990, rating:4.6, dist:'0.9 km', open:false,
+    a:{ wifi:true, parking:false, takeaway:true, delivery:true, qrpay:true, cash:false, card:true,
+        petfriendly:false, halal:null, veggie:true, ac:true, outdoor:false, toilet:false,
+        wheelchair:true, smoke:false, charging:true }
+  },
+  {
+    id:5, name:'Family Mart ลาดพร้าว', type:'Convenience Store', emoji:'🏪',
+    color:'#1e3a5f', bg:'#e0f2fe',
+    lat:13.7548, lng:100.5042, rating:4.1, dist:'0.2 km', open:true,
+    a:{ wifi:false, parking:true, takeaway:true, delivery:false, qrpay:true, cash:true, card:true,
+        petfriendly:null, halal:null, veggie:null, ac:true, outdoor:false, toilet:true,
+        wheelchair:true, smoke:false, charging:false }
+  },
+  {
+    id:6, name:'Slow Drip Coffee', type:'Specialty Coffee', emoji:'☕',
+    color:'#3b1f0a', bg:'#fef9c3',
+    lat:13.7575, lng:100.5085, rating:4.8, dist:'1.4 km', open:true,
+    a:{ wifi:true, parking:false, takeaway:true, delivery:false, qrpay:true, cash:true, card:true,
+        petfriendly:true, halal:false, veggie:true, ac:true, outdoor:true, toilet:true,
+        wheelchair:false, smoke:false, charging:true }
+  },
+];
+
+const AMENITY_DEFS = [
+  { key:'wifi',        emoji:'📶', name:'Wi-Fi ฟรี',        cat:'net' },
+  { key:'charging',    emoji:'🔌', name:'ชาร์จโทรศัพท์',    cat:'net' },
+  { key:'qrpay',       emoji:'📲', name:'จ่าย QR Code',     cat:'pay' },
+  { key:'cash',        emoji:'💵', name:'รับเงินสด',         cat:'pay' },
+  { key:'card',        emoji:'💳', name:'บัตรเครดิต',       cat:'pay' },
+  { key:'takeaway',    emoji:'🥡', name:'สั่งกลับบ้าน',     cat:'food' },
+  { key:'delivery',    emoji:'🛵', name:'เดลิเวอรี่',        cat:'food' },
+  { key:'halal',       emoji:'☪️', name:'ฮาลาล',             cat:'food' },
+  { key:'veggie',      emoji:'🥦', name:'มังสวิรัติ',        cat:'food' },
+  { key:'parking',     emoji:'🅿️', name:'ที่จอดรถ',          cat:'place' },
+  { key:'ac',          emoji:'❄️', name:'แอร์',              cat:'place' },
+  { key:'outdoor',     emoji:'🌳', name:'นั่งกลางแจ้ง',     cat:'place' },
+  { key:'toilet',      emoji:'🚻', name:'ห้องน้ำ',           cat:'place' },
+  { key:'wheelchair',  emoji:'♿', name:'รับรถเข็น',         cat:'place' },
+  { key:'petfriendly', emoji:'🐾', name:'Pet Friendly',      cat:'place' },
+  { key:'smoke',       emoji:'🚬', name:'พื้นที่สูบบุหรี่', cat:'place' },
+];
+
+const CAT_LABELS = { net:'อินเทอร์เน็ต', pay:'การชำระเงิน', food:'อาหาร & เครื่องดื่ม', place:'สถานที่' };
+
+// ─── SCORE ────────────────────────────────────────────────────────
+function score(a) {
+  const vals = Object.values(a);
+  const yes   = vals.filter(v => v === true).length;
+  const known = vals.filter(v => v !== null).length;
+  return known ? Math.round(yes / known * 100) : 0;
+}
+
+function scoreGradient(n) {
+  if (n >= 75) return ['#22c55e','#16a34a'];
+  if (n >= 50) return ['#eab308','#ca8a04'];
+  return ['#ef4444','#dc2626'];
+}
+
+// ─── MAP INIT ─────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [13.755, 100.5018], zoom: 14,
+  zoomControl: false, attributionControl: false,
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// Zoom control bottom-right
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// ─── MARKERS ──────────────────────────────────────────────────────
+let activeMarkerEl = null;
+
+PLACES.forEach(p => {
+  const s = score(p.a);
+  const [c1] = scoreGradient(s);
+
+  const el = document.createElement('div');
+  el.className = 'marker-wrap';
+  el.innerHTML = `
+    <div class="marker-pin" style="background:${p.bg}">
+      <span class="marker-emoji">${p.emoji}</span>
+    </div>
+    <div class="marker-label">${p.name}</div>
+  `;
+
+  const marker = L.marker([p.lat, p.lng], {
+    icon: L.divIcon({ html: el, className: '', iconSize: [60, 66], iconAnchor: [30, 60] })
+  }).addTo(map);
+
+  marker.on('click', () => {
+    // reset previous
+    if (activeMarkerEl) {
+      activeMarkerEl.querySelector('.marker-pin').classList.remove('active');
+      activeMarkerEl.classList.remove('active');
+    }
+    el.querySelector('.marker-pin').classList.add('active');
+    el.classList.add('active');
+    activeMarkerEl = el;
+    openSheet(p);
+    hideHint();
+  });
+});
+
+// ─── SHEET ────────────────────────────────────────────────────────
+const sheet        = document.getElementById('sheet');
+const overlay      = document.getElementById('sheet-overlay');
+
+function openSheet(p) {
+  const s = score(p.a);
+  const [c1, c2] = scoreGradient(s);
+
+  // Group amenities by category
+  const cats = ['net','pay','food','place'];
+  let sectionsHTML = '';
+  cats.forEach(cat => {
+    const items = AMENITY_DEFS.filter(d => d.cat === cat);
+    const rowsHTML = items.map(d => {
+      const val = p.a[d.key];
+      const cls = val === true ? 'yes' : val === false ? 'no' : 'unknown';
+      const statusTxt = val === true ? 'มีบริการ' : val === false ? 'ไม่มีบริการ' : 'ไม่ได้ระบุ';
+      return `
+        <div class="amenity-item ${cls}">
+          <span class="amenity-emoji">${d.emoji}</span>
+          <div class="amenity-text">
+            <div class="amenity-name">${d.name}</div>
+            <div class="amenity-status">${statusTxt}</div>
+          </div>
+          <div class="amenity-dot"></div>
+        </div>`;
+    }).join('');
+
+    sectionsHTML += `
+      <div class="section-title">${CAT_LABELS[cat]}</div>
+      <div class="amenity-grid">${rowsHTML}</div>`;
+  });
+
+  document.getElementById('sheet-body').innerHTML = `
+    <div class="sheet-hero">
+      <div class="sheet-icon" style="background:${p.bg}">${p.emoji}</div>
+      <div class="sheet-meta">
+        <div class="sheet-name">${p.name}</div>
+        <div class="sheet-type">${p.type}</div>
+        <div class="sheet-badges">
+          <span class="meta-pill ${p.open ? 'open' : 'close'}">${p.open ? '● เปิดอยู่' : '● ปิดแล้ว'}</span>
+          <span class="meta-pill star">⭐ ${p.rating}</span>
+          <span class="meta-pill dist">📍 ${p.dist}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-row">
+      <span class="score-label">สิ่งอำนวยความสะดวก</span>
+      <div class="score-track">
+        <div class="score-fill" style="width:${s}%;background:linear-gradient(90deg,${c1},${c2})"></div>
+      </div>
+      <span class="score-pct" style="color:${c1}">${s}%</span>
+    </div>
+
+    <div class="divider" style="margin-top:14px"></div>
+    ${sectionsHTML}
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="closeSheet()">🗺️ นำทาง</button>
+      <button class="btn btn-secondary" onclick="closeSheet()">✕ ปิด</button>
+    </div>
+  `;
+
+  sheet.classList.add('open');
+  overlay.classList.add('open');
+
+  // animate score fill after render
+  setTimeout(() => {
+    const fill = sheet.querySelector('.score-fill');
+    if (fill) fill.style.width = s + '%';
+  }, 50);
+}
+
+function closeSheet() {
+  sheet.classList.remove('open');
+  overlay.classList.remove('open');
+  if (activeMarkerEl) {
+    activeMarkerEl.querySelector('.marker-pin').classList.remove('active');
+    activeMarkerEl.classList.remove('active');
+    activeMarkerEl = null;
+  }
+}
+
+// close on map click
+map.on('click', closeSheet);
+
+// ─── HINT ─────────────────────────────────────────────────────────
+let hintHidden = false;
+function hideHint() {
+  if (hintHidden) return;
+  hintHidden = true;
+  document.getElementById('hint').classList.add('hidden');
+}
+
+setTimeout(hideHint, 5000);
+
+// ─── SWIPE-TO-CLOSE ───────────────────────────────────────────────
+let startY = 0, dragging = false;
+
+sheet.addEventListener('touchstart', e => {
+  startY = e.touches[0].clientY;
+  dragging = false;
+}, { passive: true });
+
+sheet.addEventListener('touchmove', e => {
+  const dy = e.touches[0].clientY - startY;
+  if (dy > 10) dragging = true;
+  if (dragging && sheet.scrollTop <= 0 && dy > 0) {
+    sheet.style.transform = `translateY(${dy}px)`;
+  }
+}, { passive: true });
+
+sheet.addEventListener('touchend', e => {
+  const dy = e.changedTouches[0].clientY - startY;
+  sheet.style.transform = '';
+  if (dy > 90) closeSheet();
+}, { passive: true });
+</script>
+</body>
+</html>
