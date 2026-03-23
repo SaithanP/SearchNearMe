@@ -230,6 +230,37 @@
     .hist-meta { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); text-align:right; }
     ::-webkit-scrollbar { width:3px; height:3px; }
     ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+
+    /* ══ AMENITY TAGS ══ */
+    .amenity-wrap {
+      display:flex; flex-wrap:wrap; gap:5px;
+      margin:8px 0 10px;
+    }
+    .amenity-tag {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:4px 9px; border-radius:8px;
+      font-size:11px; font-weight:600; font-family:'DM Mono',monospace;
+      border:1px solid var(--border2);
+      background:var(--surface3);
+      color:var(--text2);
+      white-space:nowrap;
+    }
+    .amenity-tag.amenity-yes {
+      background:rgba(61,245,165,0.08);
+      border-color:rgba(61,245,165,0.25);
+      color:#3df5a5;
+    }
+    .amenity-tag.amenity-no {
+      background:rgba(245,80,61,0.06);
+      border-color:rgba(245,80,61,0.2);
+      color:var(--text3);
+      opacity:0.55;
+    }
+    .amenity-section-label {
+      font-size:10px; font-family:'DM Mono',monospace;
+      color:var(--text3); letter-spacing:1px; text-transform:uppercase;
+      margin:8px 0 4px; width:100%;
+    }
   </style>
 </head>
 <body>
@@ -362,6 +393,8 @@ const LANGS = {
     tab_radar:'🗺️ Radar', tab_dashboard:'📊 Dashboard',
     nav_btn:'🧭 Open Navigation',
     straight_line:'↗ Straight line',
+    routing:'⏳ Routing…',
+    amenities:'Amenities',
     photos_loading:'Loading photos…', no_photos:'No photos available',
     found:'✓ Found', places:'places', searching:'🔍 Searching…',
     search_failed:'⚠️ Search failed', no_found:'No',found_within:'found within',
@@ -386,6 +419,8 @@ const LANGS = {
     tab_radar:'🗺️ เรดาร์', tab_dashboard:'📊 แดชบอร์ด',
     nav_btn:'🧭 เปิดนำทาง',
     straight_line:'↗ เส้นตรง',
+    routing:'⏳ กำลังคำนวณ…',
+    amenities:'สิ่งอำนวยความสะดวก',
     photos_loading:'กำลังโหลดรูปภาพ…', no_photos:'ไม่มีรูปภาพ',
     found:'✓ พบ', places:'สถานที่', searching:'🔍 กำลังค้นหา…',
     search_failed:'⚠️ ค้นหาล้มเหลว', no_found:'ไม่พบ', found_within:'ในระยะ',
@@ -410,6 +445,8 @@ const LANGS = {
     tab_radar:'🗺️ レーダー', tab_dashboard:'📊 ダッシュボード',
     nav_btn:'🧭 ナビを開く',
     straight_line:'↗ 直線距離',
+    routing:'⏳ 経路計算中…',
+    amenities:'設備',
     photos_loading:'写真を読み込み中…', no_photos:'写真なし',
     found:'✓', places:'件見つかりました', searching:'🔍 検索中…',
     search_failed:'⚠️ 検索失敗', no_found:'', found_within:'範囲内に見つかりません',
@@ -434,6 +471,8 @@ const LANGS = {
     tab_radar:'🗺️ 雷达', tab_dashboard:'📊 仪表板',
     nav_btn:'🧭 打开导航',
     straight_line:'↗ 直线距离',
+    routing:'⏳ 路线计算中…',
+    amenities:'设施',
     photos_loading:'加载图片中…', no_photos:'暂无图片',
     found:'✓ 找到', places:'个地点', searching:'🔍 搜索中…',
     search_failed:'⚠️ 搜索失败', no_found:'未找到', found_within:'范围内',
@@ -458,6 +497,8 @@ const LANGS = {
     tab_radar:'🗺️ 레이더', tab_dashboard:'📊 대시보드',
     nav_btn:'🧭 내비게이션 열기',
     straight_line:'↗ 직선거리',
+    routing:'⏳ 경로 계산 중…',
+    amenities:'편의시설',
     photos_loading:'사진 불러오는 중…', no_photos:'사진 없음',
     found:'✓', places:'개 장소 발견', searching:'🔍 검색 중…',
     search_failed:'⚠️ 검색 실패', no_found:'없음', found_within:'범위 내',
@@ -650,7 +691,7 @@ async function doSearch(){
   const radiusM=Math.round(toMeters(rv,unit));
   const ti=TYPE_MAP[typeKey];
   const key=Object.keys(ti).find(k=>k!=='icon'&&k!=='label');
-  const q=`[out:json][timeout:20];(node["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng});way["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng}););out center 40;`;
+  const q=`[out:json][timeout:25];(node["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng});way["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng}););out center tags 40;`;
   showStatus(t('searching'));
   document.getElementById('search-btn').disabled=true;
   try{
@@ -674,10 +715,13 @@ function renderResults(elements,ti,radiusM){
   const places=elements.map(el=>{
     const lat=el.lat??el.center?.lat, lng=el.lon??el.center?.lon;
     if(!lat||!lng)return null;
-    return{id:el.id,name:el.tags?.name||ti.label,
-      addr:[el.tags?.['addr:street'],el.tags?.['addr:housenumber']].filter(Boolean).join(' ')||el.tags?.['addr:full']||'',
+    const tags=el.tags||{};
+    // Pick localised name: prefer current lang → English → default name → type label
+    const name=tags[`name:${currentLang}`]||tags['name:en']||tags['name']||ti.label;
+    return{id:el.id,name,
+      addr:[tags['addr:street'],tags['addr:housenumber']].filter(Boolean).join(' ')||tags['addr:full']||'',
       lat,lng,dist:haversine(userLat,userLng,lat,lng),icon:ti.icon,
-      osmTags:el.tags||{}};
+      osmTags:tags};
   }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
 
   document.getElementById('results-count').textContent=places.length;
@@ -712,8 +756,6 @@ function selectPlace(id,places){
   const item=document.getElementById('pi-'+id);
   if(item){item.classList.add('active');item.scrollIntoView({behavior:'smooth',block:'nearest'});}
   if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
-  routeLayer=L.polyline([[userLat,userLng],[p.lat,p.lng]],{color:'#3dd6f5',weight:3,opacity:0.85,dashArray:'8 6'}).addTo(map);
-  map.fitBounds(routeLayer.getBounds(),{padding:[60,60]});
 
   const panel=document.getElementById('results-panel');
   let card=document.getElementById('info-card');
@@ -724,7 +766,10 @@ function selectPlace(id,places){
     panel.insertBefore(card,panel.querySelector('.results-header'));
   } else { card.className='info-card visible'; }
 
-  // Render card with photo strip placeholder
+  // Build amenity info from OSM tags
+  const tags=p.osmTags||{};
+  const amenityRows=buildAmenityHTML(tags);
+
   card.innerHTML=`
     <div class="photo-strip loading" id="photo-strip-${p.id}">
       <div class="photo-strip-placeholder"><span>🖼️</span>${t('photos_loading')}</div>
@@ -739,14 +784,102 @@ function selectPlace(id,places){
       </div>
       <div class="info-stats">
         <div class="stat-pill dist">📏 ${fmtDist(p.dist)}</div>
-        <div class="stat-pill route">${t('straight_line')}</div>
+        <div class="stat-pill route" id="route-pill">⏳ ${t('routing')}</div>
       </div>
+      ${amenityRows}
       <button class="route-btn" onclick="openInMaps(${p.lat},${p.lng})">${t('nav_btn')}</button>
     </div>`;
 
   selectedId=id;
-  // Fetch photos async
   loadPlacePhotos(p);
+  // Draw real road route via OSRM
+  drawRoadRoute(p);
+}
+
+// ── Amenity grid from OSM tags ──────────────────────────────────
+const AMENITY_DEFS=[
+  {key:'internet_access',     vals:{wlan:'yes',yes:'yes'},       emoji:'📶', cat:'net',  label:{en:'Wi-Fi',th:'Wi-Fi',ja:'Wi-Fi',zh:'Wi-Fi',ko:'Wi-Fi'}},
+  {key:'payment:qr_code',     vals:{yes:'yes'},                   emoji:'📲', cat:'pay',  label:{en:'QR Pay',th:'QR Code',ja:'QR払い',zh:'QR支付',ko:'QR 결제'}},
+  {key:'payment:cash',        vals:{yes:'yes'},                   emoji:'💵', cat:'pay',  label:{en:'Cash',th:'เงินสด',ja:'現金',zh:'现金',ko:'현금'}},
+  {key:'payment:credit_cards',vals:{yes:'yes'},                   emoji:'💳', cat:'pay',  label:{en:'Credit Card',th:'บัตรเครดิต',ja:'カード',zh:'信用卡',ko:'신용카드'}},
+  {key:'payment:debit_cards', vals:{yes:'yes'},                   emoji:'🏧', cat:'pay',  label:{en:'Debit Card',th:'เดบิต',ja:'デビット',zh:'借记卡',ko:'체크카드'}},
+  {key:'diet:halal',          vals:{yes:'yes',only:'yes'},        emoji:'☪️',  cat:'food', label:{en:'Halal',th:'ฮาลาล',ja:'ハラール',zh:'清真',ko:'할랄'}},
+  {key:'diet:vegetarian',     vals:{yes:'yes',only:'yes'},        emoji:'🥦', cat:'food', label:{en:'Vegetarian',th:'มังสวิรัติ',ja:'ベジタリアン',zh:'素食',ko:'채식'}},
+  {key:'diet:vegan',          vals:{yes:'yes',only:'yes'},        emoji:'🌱', cat:'food', label:{en:'Vegan',th:'วีแกน',ja:'ヴィーガン',zh:'纯素',ko:'비건'}},
+  {key:'takeaway',            vals:{yes:'yes',only:'yes'},        emoji:'🥡', cat:'food', label:{en:'Takeaway',th:'กลับบ้าน',ja:'テイクアウト',zh:'外卖',ko:'포장'}},
+  {key:'delivery',            vals:{yes:'yes'},                   emoji:'🛵', cat:'food', label:{en:'Delivery',th:'เดลิเวอรี่',ja:'デリバリー',zh:'外送',ko:'배달'}},
+  {key:'dog',                 vals:{yes:'yes',leashed:'yes'},     emoji:'🐾', cat:'place',label:{en:'Pet Friendly',th:'Pet Friendly',ja:'ペット可',zh:'宠物友好',ko:'반려동물'}},
+  {key:'wheelchair',          vals:{yes:'yes',limited:'yes'},     emoji:'♿', cat:'place',label:{en:'Wheelchair',th:'รถเข็น',ja:'車いす',zh:'无障碍',ko:'휠체어'}},
+  {key:'outdoor_seating',     vals:{yes:'yes'},                   emoji:'🌳', cat:'place',label:{en:'Outdoor Seating',th:'นั่งกลางแจ้ง',ja:'テラス席',zh:'户外座位',ko:'야외석'}},
+  {key:'smoking',             vals:{yes:'yes',outside:'yes'},     emoji:'🚬', cat:'place',label:{en:'Smoking Area',th:'สูบบุหรี่ได้',ja:'喫煙可',zh:'可吸烟',ko:'흡연 가능'}},
+  {key:'parking',             vals:{yes:'yes',surface:'yes'},     emoji:'🅿️', cat:'place',label:{en:'Parking',th:'ที่จอดรถ',ja:'駐車場',zh:'停车场',ko:'주차장'}},
+  {key:'toilets',             vals:{yes:'yes'},                   emoji:'🚻', cat:'place',label:{en:'Restroom',th:'ห้องน้ำ',ja:'トイレ',zh:'洗手间',ko:'화장실'}},
+];
+
+const CAT_LABEL={
+  net: {en:'Internet',th:'อินเทอร์เน็ต',ja:'ネット',zh:'网络',ko:'인터넷'},
+  pay: {en:'Payment',th:'ชำระเงิน',ja:'支払い',zh:'支付',ko:'결제'},
+  food:{en:'Food & Drink',th:'อาหาร',ja:'フード',zh:'餐饮',ko:'식음료'},
+  place:{en:'Facilities',th:'สิ่งอำนวยฯ',ja:'施設',zh:'设施',ko:'편의시설'},
+};
+
+function buildAmenityHTML(tags){
+  // collect by category — only show tags that exist in OSM data
+  const byCat={net:[],pay:[],food:[],place:[]};
+  AMENITY_DEFS.forEach(def=>{
+    const v=tags[def.key];
+    if(!v||v==='no')return;
+    const isYes=!!def.vals[v];
+    byCat[def.cat].push({def,isYes});
+  });
+  const allItems=[...byCat.net,...byCat.pay,...byCat.food,...byCat.place];
+  if(!allItems.length)return '';
+
+  let html='<div class="amenity-wrap">';
+  ['pay','food','net','place'].forEach(cat=>{
+    if(!byCat[cat].length)return;
+    const catLabel=CAT_LABEL[cat][currentLang]||CAT_LABEL[cat].en;
+    html+=`<div class="amenity-section-label">${catLabel}</div>`;
+    byCat[cat].forEach(({def,isYes})=>{
+      const label=def.label[currentLang]||def.label.en;
+      const cls=isYes?'amenity-yes':'amenity-no';
+      const mark=isYes?'✓':'✗';
+      html+=`<div class="amenity-tag ${cls}">${def.emoji} ${label} <span style="opacity:.7">${mark}</span></div>`;
+    });
+  });
+  html+='</div>';
+  return html;
+}
+
+// ── Real road routing via OSRM ──────────────────────────────────
+const MIN_LABEL={en:'min',th:'นาที',ja:'分',zh:'分钟',ko:'분'};
+
+async function drawRoadRoute(p){
+  try{
+    const url=`https://router.project-osrm.org/route/v1/walking/${userLng},${userLat};${p.lng},${p.lat}?overview=full&geometries=geojson`;
+    const res=await fetch(url);
+    const data=await res.json();
+    if(data.code!=='Ok'||!data.routes?.length) throw new Error('no route');
+    const coords=data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+    const dur=data.routes[0].duration;
+    const distM=data.routes[0].distance;
+    if(routeLayer){map.removeLayer(routeLayer);}
+    routeLayer=L.polyline(coords,{color:'#3dd6f5',weight:4,opacity:0.9}).addTo(map);
+    map.fitBounds(routeLayer.getBounds(),{padding:[60,60]});
+    const pill=document.getElementById('route-pill');
+    if(pill){
+      const mins=Math.ceil(dur/60);
+      const minWord=MIN_LABEL[currentLang]||'min';
+      pill.textContent=`🚶 ${mins} ${minWord} · ${fmtDist(distM)}`;
+      pill.className='stat-pill route';
+    }
+  }catch(e){
+    if(routeLayer){map.removeLayer(routeLayer);}
+    routeLayer=L.polyline([[userLat,userLng],[p.lat,p.lng]],{color:'#3dd6f5',weight:3,opacity:0.7,dashArray:'8 6'}).addTo(map);
+    map.fitBounds(routeLayer.getBounds(),{padding:[60,60]});
+    const pill=document.getElementById('route-pill');
+    if(pill){pill.textContent=t('straight_line');pill.className='stat-pill route';}
+  }
 }
 
 // ══════════════════════════════════════════════
