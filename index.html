@@ -38,6 +38,29 @@
     .nav-tab.active { background:var(--accent); color:#080b12; }
     .nav-tab:not(.active):hover { background:var(--surface3); color:var(--text); }
 
+    /* ══ LANG SWITCHER ══ */
+    .lang-btn {
+      flex-shrink:0; background:var(--surface2); border:1px solid var(--border2);
+      border-radius:8px; padding:5px 10px; cursor:pointer; font-size:12px;
+      color:var(--text2); font-family:'DM Mono',monospace;
+      display:flex; align-items:center; gap:4px; transition:all 0.2s;
+      position:relative;
+    }
+    .lang-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .lang-dropdown {
+      display:none; position:absolute; top:calc(100% + 6px); right:0;
+      background:var(--surface2); border:1px solid var(--border2); border-radius:10px;
+      overflow:hidden; z-index:999; min-width:130px;
+      box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    }
+    .lang-btn.open .lang-dropdown { display:block; }
+    .lang-option {
+      padding:9px 14px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px;
+      transition:background 0.12s; color:var(--text);
+    }
+    .lang-option:hover { background:var(--surface3); }
+    .lang-option.active { color:var(--accent); }
+
     /* ── Pages ── */
     .page { display:none; flex:1; min-height:0; flex-direction:column; overflow:hidden; }
     .page.active { display:flex; }
@@ -78,8 +101,56 @@
     .place-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .place-addr { font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .place-dist { font-family:'DM Mono',monospace; font-size:12px; color:var(--accent2); flex-shrink:0; }
-    .info-card { margin:8px 10px; background:var(--surface2); border:1px solid var(--border2); border-radius:12px; padding:14px; display:none; }
+
+    /* ══ INFO CARD (extended with photos) ══ */
+    .info-card { margin:8px 10px; background:var(--surface2); border:1px solid var(--border2); border-radius:12px; overflow:hidden; display:none; }
     .info-card.visible { display:block; }
+
+    /* Photo strip */
+    .photo-strip {
+      display:none; gap:0; overflow-x:auto; scrollbar-width:none;
+      height:130px; background:var(--surface3);
+    }
+    .photo-strip::-webkit-scrollbar { display:none; }
+    .photo-strip.has-photos { display:flex; }
+    .photo-strip img {
+      height:130px; width:auto; min-width:100px; object-fit:cover;
+      flex-shrink:0; cursor:pointer; transition:opacity 0.2s;
+      border-right:2px solid var(--surface2);
+    }
+    .photo-strip img:hover { opacity:0.85; }
+    .photo-strip-placeholder {
+      height:130px; display:flex; align-items:center; justify-content:center;
+      background:var(--surface3); color:var(--text3);
+      font-size:12px; font-family:'DM Mono',monospace;
+      gap:8px; width:100%;
+    }
+    .photo-strip.loading { display:flex; }
+
+    /* Photo lightbox */
+    .lightbox {
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(0,0,0,0.92); align-items:center; justify-content:center;
+    }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width:94vw; max-height:88vh; border-radius:10px; object-fit:contain; }
+    .lightbox-close {
+      position:absolute; top:16px; right:16px; background:var(--surface2);
+      border:1px solid var(--border2); border-radius:8px; color:var(--text);
+      font-size:20px; width:36px; height:36px; display:flex; align-items:center;
+      justify-content:center; cursor:pointer;
+    }
+    .lightbox-nav {
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:rgba(14,19,32,0.75); border:1px solid var(--border2);
+      color:var(--text); font-size:20px; width:40px; height:40px;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:50%; cursor:pointer; backdrop-filter:blur(6px);
+    }
+    .lightbox-nav.prev { left:12px; }
+    .lightbox-nav.next { right:12px; }
+
+    .info-body { padding:14px; }
     .info-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
     .info-icon { font-size:28px; flex-shrink:0; }
     .info-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; line-height:1.2; }
@@ -110,8 +181,6 @@
     .dash-scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
     .dash-scroll::-webkit-scrollbar { width:3px; }
     .dash-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
-
-    /* Weather hero */
     .weather-hero { background:linear-gradient(135deg,#0e1a2e,#091422); border:1px solid var(--border2); border-radius:16px; padding:18px; position:relative; overflow:hidden; }
     .weather-hero::before { content:''; position:absolute; top:-50px; right:-50px; width:200px; height:200px; border:1px solid rgba(61,214,245,0.06); border-radius:50%; pointer-events:none; }
     .weather-hero::after { content:''; position:absolute; top:-90px; right:-90px; width:300px; height:300px; border:1px solid rgba(61,214,245,0.03); border-radius:50%; pointer-events:none; }
@@ -136,13 +205,9 @@
     .w-updated { font-size:10px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:10px; position:relative; z-index:1; }
     .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); display:inline-block; animation:blink 1.5s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-    /* Card wrapper */
     .dash-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; }
     .card-label { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text2); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
     .card-label::before { content:''; width:3px; height:12px; background:var(--accent); border-radius:2px; box-shadow:0 0 6px var(--accent); }
-
-    /* Hourly strip */
     .hourly-strip { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
     .hourly-strip::-webkit-scrollbar { display:none; }
     .hour-card { flex-shrink:0; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:8px 10px; text-align:center; min-width:52px; }
@@ -150,11 +215,7 @@
     .hour-time { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); margin-bottom:4px; }
     .hour-ico { font-size:18px; margin-bottom:3px; }
     .hour-tmp { font-family:'DM Mono',monospace; font-size:12px; color:var(--text); }
-
-    /* Temp graph */
     #temp-canvas { width:100%; height:90px; display:block; margin-top:10px; }
-
-    /* Stat grid */
     .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; }
     .sc-label { font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; margin-bottom:5px; }
@@ -162,14 +223,11 @@
     .sc-sub { font-size:11px; color:var(--text2); margin-top:2px; }
     .sc-bar { height:3px; background:var(--surface3); border-radius:2px; margin-top:8px; overflow:hidden; }
     .sc-bar-fill { height:100%; border-radius:2px; transition:width 1s ease; }
-
-    /* History */
     .hist-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
     .hist-item:last-child { border-bottom:none; }
     .hist-ico { width:30px; height:30px; border-radius:8px; background:var(--surface2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
     .hist-name { font-size:13px; font-weight:500; flex:1; }
     .hist-meta { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); text-align:right; }
-
     ::-webkit-scrollbar { width:3px; height:3px; }
     ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
   </style>
@@ -180,10 +238,23 @@
   <!-- TOP NAV -->
   <nav class="topnav">
     <div class="logo">NearBy<sup>RADAR</sup></div>
-    <div id="loc-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)">locating…</div>
+    <div id="loc-status" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)" data-i18n="locating">locating…</div>
+
+    <!-- ══ LANGUAGE SWITCHER ══ -->
+    <div class="lang-btn" id="lang-btn" onclick="toggleLangMenu(event)">
+      🌐 <span id="lang-current">EN</span>
+      <div class="lang-dropdown" id="lang-dropdown">
+        <div class="lang-option active" data-lang="en" onclick="setLang('en')">🇬🇧 English</div>
+        <div class="lang-option" data-lang="th" onclick="setLang('th')">🇹🇭 ภาษาไทย</div>
+        <div class="lang-option" data-lang="ja" onclick="setLang('ja')">🇯🇵 日本語</div>
+        <div class="lang-option" data-lang="zh" onclick="setLang('zh')">🇨🇳 中文</div>
+        <div class="lang-option" data-lang="ko" onclick="setLang('ko')">🇰🇷 한국어</div>
+      </div>
+    </div>
+
     <div class="nav-tabs">
-      <button class="nav-tab active" onclick="showPage('radar')">🗺️ Radar</button>
-      <button class="nav-tab" onclick="showPage('dashboard')">📊 Dashboard</button>
+      <button class="nav-tab active" onclick="showPage('radar')" data-i18n-tab="radar">🗺️ Radar</button>
+      <button class="nav-tab" onclick="showPage('dashboard')" data-i18n-tab="dashboard">📊 Dashboard</button>
     </div>
   </nav>
 
@@ -192,23 +263,7 @@
     <div class="controls">
       <div class="ctrl-group">
         <div class="select-wrap">
-          <select id="place-type">
-            <option value="restaurant">🍜 Restaurant</option>
-            <option value="cafe">☕ Café / Coffee</option>
-            <option value="bar">🍺 Bar</option>
-            <option value="convenience">🏪 Convenience / 7-11</option>
-            <option value="pharmacy">💊 Pharmacy</option>
-            <option value="hospital">🏥 Hospital</option>
-            <option value="supermarket">🛒 Supermarket</option>
-            <option value="atm">💳 ATM</option>
-            <option value="gas_station">⛽ Gas Station</option>
-            <option value="hotel">🏨 Hotel</option>
-            <option value="tourist_attraction">🗺️ Attraction</option>
-            <option value="park">🌿 Park</option>
-            <option value="shopping_mall">🛍️ Shopping Mall</option>
-            <option value="bank">🏦 Bank</option>
-            <option value="bus_station">🚌 Bus Station</option>
-          </select>
+          <select id="place-type"></select>
         </div>
         <div class="range-wrap">
           <input type="number" id="range-val" value="500" min="50" max="50000"/>
@@ -219,16 +274,16 @@
           </div>
         </div>
       </div>
-      <button class="search-btn" id="search-btn" onclick="doSearch()" disabled>Search</button>
+      <button class="search-btn" id="search-btn" onclick="doSearch()" disabled data-i18n="search">Search</button>
     </div>
     <div id="map"><div class="status-bar" id="status-bar"></div></div>
     <div class="results-panel" id="results-panel">
       <div class="results-header">
-        <span class="results-title">Results</span>
+        <span class="results-title" data-i18n="results">Results</span>
         <span class="results-count" id="results-count">0</span>
       </div>
       <div class="place-list" id="place-list">
-        <div class="empty-state">Search for nearby places to see results here.</div>
+        <div class="empty-state" data-i18n="empty_search">Search for nearby places to see results here.</div>
       </div>
     </div>
   </div>
@@ -236,11 +291,9 @@
   <!-- ═══ DASHBOARD PAGE ═══ -->
   <div class="page" id="page-dashboard">
     <div class="dash-scroll">
-
-      <!-- Weather Hero -->
       <div class="weather-hero">
         <button class="w-refresh" id="refresh-btn" onclick="loadWeather()">
-          <span class="spin-icon">↻</span> Refresh
+          <span class="spin-icon">↻</span> <span data-i18n="refresh">Refresh</span>
         </button>
         <div class="w-row1">
           <div>
@@ -265,77 +318,255 @@
         </div>
         <div class="w-updated" id="w-updated">Last updated: —</div>
       </div>
-
-      <!-- Hourly Forecast -->
       <div class="dash-card">
-        <div class="card-label">24-Hour Forecast</div>
-        <div class="hourly-strip" id="hourly-row">
-          <div style="color:var(--text3);font-size:12px;">Loading…</div>
-        </div>
+        <div class="card-label" data-i18n="forecast">24-Hour Forecast</div>
+        <div class="hourly-strip" id="hourly-row"><div style="color:var(--text3);font-size:12px;">Loading…</div></div>
         <canvas id="temp-canvas" height="90"></canvas>
       </div>
-
-      <!-- Stat Grid -->
       <div class="stat-grid">
-        <div class="stat-card">
-          <div class="sc-label">☀️ UV Index</div>
-          <div class="sc-val" id="s-uv">—</div>
-          <div class="sc-sub" id="s-uv-lbl">—</div>
-          <div class="sc-bar"><div class="sc-bar-fill" id="s-uv-bar" style="width:0%;background:var(--green)"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="sc-label">🌧️ Rain Chance</div>
-          <div class="sc-val" id="s-rain">—</div>
-          <div class="sc-sub" id="s-rain-lbl">—</div>
-          <div class="sc-bar"><div class="sc-bar-fill" id="s-rain-bar" style="width:0%;background:var(--accent)"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="sc-label">🌅 Sunrise</div>
-          <div class="sc-val" id="s-sunrise" style="font-size:18px">—</div>
-          <div class="sc-sub" id="s-sunset">Sunset: —</div>
-        </div>
-        <div class="stat-card">
-          <div class="sc-label">☁️ Cloud Cover</div>
-          <div class="sc-val" id="s-cloud">—</div>
-          <div class="sc-sub">Cloud cover</div>
-          <div class="sc-bar"><div class="sc-bar-fill" id="s-cloud-bar" style="width:0%;background:var(--text2)"></div></div>
-        </div>
+        <div class="stat-card"><div class="sc-label">☀️ UV Index</div><div class="sc-val" id="s-uv">—</div><div class="sc-sub" id="s-uv-lbl">—</div><div class="sc-bar"><div class="sc-bar-fill" id="s-uv-bar" style="width:0%;background:var(--green)"></div></div></div>
+        <div class="stat-card"><div class="sc-label" data-i18n="rain_chance">🌧️ Rain Chance</div><div class="sc-val" id="s-rain">—</div><div class="sc-sub" id="s-rain-lbl">—</div><div class="sc-bar"><div class="sc-bar-fill" id="s-rain-bar" style="width:0%;background:var(--accent)"></div></div></div>
+        <div class="stat-card"><div class="sc-label">🌅 Sunrise</div><div class="sc-val" id="s-sunrise" style="font-size:18px">—</div><div class="sc-sub" id="s-sunset">Sunset: —</div></div>
+        <div class="stat-card"><div class="sc-label">☁️ Cloud Cover</div><div class="sc-val" id="s-cloud">—</div><div class="sc-sub" data-i18n="cloud_cover">Cloud cover</div><div class="sc-bar"><div class="sc-bar-fill" id="s-cloud-bar" style="width:0%;background:var(--text2)"></div></div></div>
       </div>
-
-      <!-- Search History -->
       <div class="dash-card">
-        <div class="card-label">Recent Searches</div>
-        <div id="history-list">
-          <div style="color:var(--text3);font-size:12px;padding:6px 0;">No searches yet — use the Radar tab!</div>
-        </div>
+        <div class="card-label" data-i18n="recent_searches">Recent Searches</div>
+        <div id="history-list"><div style="color:var(--text3);font-size:12px;padding:6px 0;" data-i18n="no_searches">No searches yet — use the Radar tab!</div></div>
       </div>
-
     </div>
   </div>
 
 </div>
 
+<!-- PHOTO LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+  <div class="lightbox-nav prev" onclick="lightboxNav(-1)">‹</div>
+  <img id="lightbox-img" src="" alt=""/>
+  <div class="lightbox-nav next" onclick="lightboxNav(1)">›</div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ═══ STATE ═══
+// ══════════════════════════════════════════════
+// i18n — TRANSLATIONS
+// ══════════════════════════════════════════════
+const LANGS = {
+  en: {
+    locating:'locating…', located:'📍 Located', no_gps:'⚠️ No GPS',
+    search:'Search', results:'Results', refresh:'Refresh',
+    forecast:'24-Hour Forecast', rain_chance:'🌧️ Rain Chance',
+    cloud_cover:'Cloud cover', recent_searches:'Recent Searches',
+    no_searches:'No searches yet — use the Radar tab!',
+    empty_search:'Search for nearby places to see results here.',
+    tab_radar:'🗺️ Radar', tab_dashboard:'📊 Dashboard',
+    nav_btn:'🧭 Open Navigation',
+    straight_line:'↗ Straight line',
+    photos_loading:'Loading photos…', no_photos:'No photos available',
+    found:'✓ Found', places:'places', searching:'🔍 Searching…',
+    search_failed:'⚠️ Search failed', no_found:'No',found_within:'found within',
+    feels_like:'Feels like', last_updated:'Last updated:',
+    sunrise:'Sunset:', uv_low:'Low — Safe', uv_mod:'Moderate', uv_high:'High', uv_vhigh:'Very High',
+    rain_unlikely:'Unlikely', rain_possible:'Possible', rain_likely:'Likely',
+    types:{
+      restaurant:'🍜 Restaurant', cafe:'☕ Café / Coffee', bar:'🍺 Bar',
+      convenience:'🏪 Convenience / 7-11', pharmacy:'💊 Pharmacy', hospital:'🏥 Hospital',
+      supermarket:'🛒 Supermarket', atm:'💳 ATM', gas_station:'⛽ Gas Station',
+      hotel:'🏨 Hotel', tourist_attraction:'🗺️ Attraction', park:'🌿 Park',
+      shopping_mall:'🛍️ Shopping Mall', bank:'🏦 Bank', bus_station:'🚌 Bus Station',
+    }
+  },
+  th: {
+    locating:'กำลังระบุตำแหน่ง…', located:'📍 พบตำแหน่ง', no_gps:'⚠️ ไม่มี GPS',
+    search:'ค้นหา', results:'ผลลัพธ์', refresh:'รีเฟรช',
+    forecast:'พยากรณ์ 24 ชั่วโมง', rain_chance:'🌧️ โอกาสฝนตก',
+    cloud_cover:'ปริมาณเมฆ', recent_searches:'การค้นหาล่าสุด',
+    no_searches:'ยังไม่มีการค้นหา — ลองใช้แท็บ Radar!',
+    empty_search:'ค้นหาสถานที่ใกล้เคียงเพื่อดูผลลัพธ์',
+    tab_radar:'🗺️ เรดาร์', tab_dashboard:'📊 แดชบอร์ด',
+    nav_btn:'🧭 เปิดนำทาง',
+    straight_line:'↗ เส้นตรง',
+    photos_loading:'กำลังโหลดรูปภาพ…', no_photos:'ไม่มีรูปภาพ',
+    found:'✓ พบ', places:'สถานที่', searching:'🔍 กำลังค้นหา…',
+    search_failed:'⚠️ ค้นหาล้มเหลว', no_found:'ไม่พบ', found_within:'ในระยะ',
+    feels_like:'รู้สึกเหมือน', last_updated:'อัปเดตล่าสุด:',
+    sunrise:'พระอาทิตย์ตก:', uv_low:'ต่ำ — ปลอดภัย', uv_mod:'ปานกลาง', uv_high:'สูง', uv_vhigh:'สูงมาก',
+    rain_unlikely:'ไม่น่าฝนตก', rain_possible:'อาจฝนตก', rain_likely:'มีแนวโน้มฝนตก',
+    types:{
+      restaurant:'🍜 ร้านอาหาร', cafe:'☕ คาเฟ่ / กาแฟ', bar:'🍺 บาร์',
+      convenience:'🏪 ร้านสะดวกซื้อ', pharmacy:'💊 ร้านขายยา', hospital:'🏥 โรงพยาบาล',
+      supermarket:'🛒 ซูเปอร์มาร์เก็ต', atm:'💳 ตู้เอทีเอ็ม', gas_station:'⛽ ปั๊มน้ำมัน',
+      hotel:'🏨 โรงแรม', tourist_attraction:'🗺️ สถานที่ท่องเที่ยว', park:'🌿 สวนสาธารณะ',
+      shopping_mall:'🛍️ ห้างสรรพสินค้า', bank:'🏦 ธนาคาร', bus_station:'🚌 สถานีรถเมล์',
+    }
+  },
+  ja: {
+    locating:'位置を取得中…', located:'📍 位置確認済', no_gps:'⚠️ GPS なし',
+    search:'検索', results:'結果', refresh:'更新',
+    forecast:'24時間予報', rain_chance:'🌧️ 降水確率',
+    cloud_cover:'雲量', recent_searches:'最近の検索',
+    no_searches:'まだ検索なし — Radarを使ってみて！',
+    empty_search:'近くの場所を検索して結果を表示します。',
+    tab_radar:'🗺️ レーダー', tab_dashboard:'📊 ダッシュボード',
+    nav_btn:'🧭 ナビを開く',
+    straight_line:'↗ 直線距離',
+    photos_loading:'写真を読み込み中…', no_photos:'写真なし',
+    found:'✓', places:'件見つかりました', searching:'🔍 検索中…',
+    search_failed:'⚠️ 検索失敗', no_found:'', found_within:'範囲内に見つかりません',
+    feels_like:'体感温度', last_updated:'最終更新:',
+    sunrise:'日没:', uv_low:'低 — 安全', uv_mod:'中程度', uv_high:'高い', uv_vhigh:'非常に高い',
+    rain_unlikely:'降らない', rain_possible:'可能性あり', rain_likely:'降りそう',
+    types:{
+      restaurant:'🍜 レストラン', cafe:'☕ カフェ', bar:'🍺 バー',
+      convenience:'🏪 コンビニ', pharmacy:'💊 薬局', hospital:'🏥 病院',
+      supermarket:'🛒 スーパー', atm:'💳 ATM', gas_station:'⛽ ガソリンスタンド',
+      hotel:'🏨 ホテル', tourist_attraction:'🗺️ 観光地', park:'🌿 公園',
+      shopping_mall:'🛍️ ショッピングモール', bank:'🏦 銀行', bus_station:'🚌 バス停',
+    }
+  },
+  zh: {
+    locating:'定位中…', located:'📍 已定位', no_gps:'⚠️ 无GPS',
+    search:'搜索', results:'结果', refresh:'刷新',
+    forecast:'24小时预报', rain_chance:'🌧️ 降雨概率',
+    cloud_cover:'云量', recent_searches:'最近搜索',
+    no_searches:'暂无搜索记录 — 使用雷达标签！',
+    empty_search:'搜索附近地点以查看结果。',
+    tab_radar:'🗺️ 雷达', tab_dashboard:'📊 仪表板',
+    nav_btn:'🧭 打开导航',
+    straight_line:'↗ 直线距离',
+    photos_loading:'加载图片中…', no_photos:'暂无图片',
+    found:'✓ 找到', places:'个地点', searching:'🔍 搜索中…',
+    search_failed:'⚠️ 搜索失败', no_found:'未找到', found_within:'范围内',
+    feels_like:'体感温度', last_updated:'最后更新:',
+    sunrise:'日落:', uv_low:'低 — 安全', uv_mod:'中等', uv_high:'高', uv_vhigh:'非常高',
+    rain_unlikely:'不太可能', rain_possible:'可能', rain_likely:'很可能',
+    types:{
+      restaurant:'🍜 餐厅', cafe:'☕ 咖啡馆', bar:'🍺 酒吧',
+      convenience:'🏪 便利店', pharmacy:'💊 药店', hospital:'🏥 医院',
+      supermarket:'🛒 超市', atm:'💳 ATM', gas_station:'⛽ 加油站',
+      hotel:'🏨 酒店', tourist_attraction:'🗺️ 景点', park:'🌿 公园',
+      shopping_mall:'🛍️ 购物中心', bank:'🏦 银行', bus_station:'🚌 公交站',
+    }
+  },
+  ko: {
+    locating:'위치 확인 중…', located:'📍 위치 확인됨', no_gps:'⚠️ GPS 없음',
+    search:'검색', results:'결과', refresh:'새로고침',
+    forecast:'24시간 예보', rain_chance:'🌧️ 강수 확률',
+    cloud_cover:'구름량', recent_searches:'최근 검색',
+    no_searches:'아직 검색 없음 — Radar 탭을 사용해보세요!',
+    empty_search:'근처 장소를 검색하여 결과를 확인하세요.',
+    tab_radar:'🗺️ 레이더', tab_dashboard:'📊 대시보드',
+    nav_btn:'🧭 내비게이션 열기',
+    straight_line:'↗ 직선거리',
+    photos_loading:'사진 불러오는 중…', no_photos:'사진 없음',
+    found:'✓', places:'개 장소 발견', searching:'🔍 검색 중…',
+    search_failed:'⚠️ 검색 실패', no_found:'없음', found_within:'범위 내',
+    feels_like:'체감온도', last_updated:'마지막 업데이트:',
+    sunrise:'일몰:', uv_low:'낮음 — 안전', uv_mod:'보통', uv_high:'높음', uv_vhigh:'매우 높음',
+    rain_unlikely:'가능성 낮음', rain_possible:'가능성 있음', rain_likely:'가능성 높음',
+    types:{
+      restaurant:'🍜 레스토랑', cafe:'☕ 카페', bar:'🍺 바',
+      convenience:'🏪 편의점', pharmacy:'💊 약국', hospital:'🏥 병원',
+      supermarket:'🛒 슈퍼마켓', atm:'💳 ATM', gas_station:'⛽ 주유소',
+      hotel:'🏨 호텔', tourist_attraction:'🗺️ 관광지', park:'🌿 공원',
+      shopping_mall:'🛍️ 쇼핑몰', bank:'🏦 은행', bus_station:'🚌 버스 정류장',
+    }
+  },
+};
+
+let currentLang = localStorage.getItem('nb_lang') || 'en';
+
+function t(key) { return LANGS[currentLang]?.[key] ?? LANGS.en[key] ?? key; }
+function tType(k) { return LANGS[currentLang]?.types?.[k] ?? LANGS.en.types[k] ?? k; }
+
+function applyLang() {
+  // static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+  // nav tabs
+  document.querySelectorAll('[data-i18n-tab]').forEach(el => {
+    const tab = el.dataset.i18nTab;
+    el.textContent = tab === 'radar' ? t('tab_radar') : t('tab_dashboard');
+  });
+  // place type dropdown
+  buildTypeSelect();
+  // lang current label
+  document.getElementById('lang-current').textContent = currentLang.toUpperCase();
+  // mark active option
+  document.querySelectorAll('.lang-option').forEach(o => {
+    o.classList.toggle('active', o.dataset.lang === currentLang);
+  });
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('nb_lang', lang);
+  applyLang();
+  document.getElementById('lang-btn').classList.remove('open');
+  // re-render history in new lang
+  renderHistory();
+}
+
+function toggleLangMenu(e) {
+  e.stopPropagation();
+  document.getElementById('lang-btn').classList.toggle('open');
+}
+document.addEventListener('click', () => {
+  document.getElementById('lang-btn').classList.remove('open');
+});
+
+// ══════════════════════════════════════════════
+// PLACE TYPE SELECT (i18n)
+// ══════════════════════════════════════════════
+const TYPE_KEYS = ['restaurant','cafe','bar','convenience','pharmacy','hospital',
+  'supermarket','atm','gas_station','hotel','tourist_attraction','park','shopping_mall','bank','bus_station'];
+
+function buildTypeSelect() {
+  const sel = document.getElementById('place-type');
+  const cur = sel.value;
+  sel.innerHTML = TYPE_KEYS.map(k => `<option value="${k}">${tType(k)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
 let map, userMarker, userLat, userLng, routeLayer, placeMarkers=[], selectedId=null;
 let unit='m', mapInited=false, weatherLoaded=false;
 let searchHistory = JSON.parse(localStorage.getItem('nb_history')||'[]');
 
-// ═══ NAV ═══
+// ══ PHOTOS STATE ══
+let lightboxPhotos = [], lightboxIdx = 0;
+
+// ══════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>{
-    if((name==='radar'&&t.textContent.includes('Radar'))||(name==='dashboard'&&t.textContent.includes('Dashboard')))
-      t.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(tab=>{
+    if((name==='radar'&&tab.textContent.includes('Radar'))||
+       (name==='radar'&&tab.textContent.includes('เรดาร์'))||
+       (name==='radar'&&tab.textContent.includes('レーダー'))||
+       (name==='radar'&&tab.textContent.includes('雷达'))||
+       (name==='radar'&&tab.textContent.includes('레이더'))||
+       (name==='dashboard'&&tab.textContent.includes('Dashboard'))||
+       (name==='dashboard'&&tab.textContent.includes('แดชบอร์ด'))||
+       (name==='dashboard'&&tab.textContent.includes('ダッシュボード'))||
+       (name==='dashboard'&&tab.textContent.includes('仪表板'))||
+       (name==='dashboard'&&tab.textContent.includes('대시보드')))
+      tab.classList.add('active');
   });
   if(name==='dashboard'){ renderHistory(); if(!weatherLoaded&&userLat) loadWeather(); }
   if(name==='radar'&&map) setTimeout(()=>map.invalidateSize(),50);
 }
 
-// ═══ TYPES ═══
+// ══════════════════════════════════════════════
+// TYPE MAP
+// ══════════════════════════════════════════════
 const TYPE_MAP={
   restaurant:{amenity:'restaurant',icon:'🍜',label:'Restaurant'},
   cafe:{amenity:'cafe',icon:'☕',label:'Café'},
@@ -354,14 +585,18 @@ const TYPE_MAP={
   bus_station:{amenity:'bus_station',icon:'🚌',label:'Bus Station'},
 };
 
-// ═══ HELPERS ═══
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
 function toMeters(v,u){return u==='km'?v*1000:u==='mi'?v*1609.34:v;}
 function fmtDist(m){return m<1000?Math.round(m)+' m':(m/1000).toFixed(1)+' km';}
 function haversine(a,b,c,d){const R=6371000,r=x=>x*Math.PI/180,dL=r(c-a),dl=r(d-b),k=Math.sin(dL/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(k),Math.sqrt(1-k));}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function timeAgo(ts){const m=Math.floor((Date.now()-ts)/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 
-// ═══ STATUS ═══
+// ══════════════════════════════════════════════
+// STATUS BAR
+// ══════════════════════════════════════════════
 function showStatus(msg,type='',dur=0){
   const el=document.getElementById('status-bar');
   el.textContent=msg; el.className='status-bar visible'+(type?' '+type:'');
@@ -369,7 +604,9 @@ function showStatus(msg,type='',dur=0){
 }
 function hideStatus(){document.getElementById('status-bar').classList.remove('visible');}
 
-// ═══ MAP ═══
+// ══════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════
 function initMap(lat,lng){
   if(mapInited)return; mapInited=true;
   map=L.map('map',{zoomControl:true,attributionControl:false}).setView([lat,lng],15);
@@ -379,20 +616,23 @@ function initMap(lat,lng){
   userMarker.bindPopup('<b>📍 You are here</b>');
 }
 
-// ═══ GEOLOCATION ═══
+// ══════════════════════════════════════════════
+// GEOLOCATION
+// ══════════════════════════════════════════════
 function getLocation(){
   if(!navigator.geolocation){showStatus('Geolocation not supported','error');return;}
   showStatus('📡 Locating you…');
   navigator.geolocation.getCurrentPosition(pos=>{
     userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-    document.getElementById('loc-status').textContent='📍 Located';
-    document.getElementById('loc-status').style.color='var(--green)';
+    const ls=document.getElementById('loc-status');
+    ls.textContent=t('located'); ls.style.color='var(--green)';
     document.getElementById('search-btn').disabled=false;
     initMap(userLat,userLng); hideStatus();
     loadWeather();
   },err=>{
     showStatus('⚠️ Location denied','error');
-    document.getElementById('loc-status').textContent='⚠️ No GPS';
+    const ls=document.getElementById('loc-status');
+    ls.textContent=t('no_gps');
     userLat=13.7563; userLng=100.5018;
     initMap(userLat,userLng);
     document.getElementById('search-btn').disabled=false;
@@ -400,7 +640,9 @@ function getLocation(){
   },{enableHighAccuracy:true,timeout:10000});
 }
 
-// ═══ SEARCH ═══
+// ══════════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════════
 async function doSearch(){
   if(!userLat)return;
   const typeKey=document.getElementById('place-type').value;
@@ -409,7 +651,7 @@ async function doSearch(){
   const ti=TYPE_MAP[typeKey];
   const key=Object.keys(ti).find(k=>k!=='icon'&&k!=='label');
   const q=`[out:json][timeout:20];(node["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng});way["${key}"="${ti[key]}"](around:${radiusM},${userLat},${userLng}););out center 40;`;
-  showStatus('🔍 Searching…');
+  showStatus(t('searching'));
   document.getElementById('search-btn').disabled=true;
   try{
     const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q});
@@ -418,23 +660,29 @@ async function doSearch(){
     renderResults(data.elements,ti,radiusM,typeKey);
   }catch(e){
     document.getElementById('search-btn').disabled=false;
-    showStatus('⚠️ Search failed','error',3000);
+    showStatus(t('search_failed'),'error',3000);
   }
 }
 
 function renderResults(elements,ti,radiusM){
   placeMarkers.forEach(m=>map.removeLayer(m)); placeMarkers=[];
   if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;} selectedId=null;
+  // clear old info card
+  const oldCard=document.getElementById('info-card');
+  if(oldCard)oldCard.remove();
+
   const places=elements.map(el=>{
     const lat=el.lat??el.center?.lat, lng=el.lon??el.center?.lon;
     if(!lat||!lng)return null;
     return{id:el.id,name:el.tags?.name||ti.label,
       addr:[el.tags?.['addr:street'],el.tags?.['addr:housenumber']].filter(Boolean).join(' ')||el.tags?.['addr:full']||'',
-      lat,lng,dist:haversine(userLat,userLng,lat,lng),icon:ti.icon};
+      lat,lng,dist:haversine(userLat,userLng,lat,lng),icon:ti.icon,
+      osmTags:el.tags||{}};
   }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
+
   document.getElementById('results-count').textContent=places.length;
   if(!places.length){
-    document.getElementById('place-list').innerHTML=`<div class="empty-state">No ${ti.label.toLowerCase()} found within ${fmtDist(radiusM)}.</div>`;
+    document.getElementById('place-list').innerHTML=`<div class="empty-state">${t('no_found')} ${ti.label.toLowerCase()} ${t('found_within')} ${fmtDist(radiusM)}.</div>`;
     hideStatus(); return;
   }
   places.forEach(p=>{
@@ -450,10 +698,13 @@ function renderResults(elements,ti,radiusM){
       <div class="place-dist">${fmtDist(p.dist)}</div>
     </div>`).join('');
   window._places=places;
-  showStatus(`✓ Found ${places.length} places`,'success',2500);
+  showStatus(`${t('found')} ${places.length} ${t('places')}`,'success',2500);
   addHistory({icon:ti.icon,label:ti.label,count:places.length,time:Date.now(),radius:fmtDist(radiusM)});
 }
 
+// ══════════════════════════════════════════════
+// SELECT PLACE (with photos)
+// ══════════════════════════════════════════════
 function selectPlace(id,places){
   const list=places||window._places||[];
   const p=list.find(x=>String(x.id)===String(id)); if(!p)return;
@@ -463,13 +714,169 @@ function selectPlace(id,places){
   if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
   routeLayer=L.polyline([[userLat,userLng],[p.lat,p.lng]],{color:'#3dd6f5',weight:3,opacity:0.85,dashArray:'8 6'}).addTo(map);
   map.fitBounds(routeLayer.getBounds(),{padding:[60,60]});
+
   const panel=document.getElementById('results-panel');
   let card=document.getElementById('info-card');
-  if(!card){card=document.createElement('div');card.id='info-card';card.className='info-card visible';panel.insertBefore(card,panel.querySelector('.results-header'));}
-  else card.className='info-card visible';
-  card.innerHTML=`<div class="info-top"><div class="info-icon">${p.icon}</div><div><div class="info-name">${esc(p.name)}</div>${p.addr?`<div class="info-addr">${esc(p.addr)}</div>`:''}</div></div><div class="info-stats"><div class="stat-pill dist">📏 ${fmtDist(p.dist)}</div><div class="stat-pill route">↗ Straight line</div></div><button class="route-btn" onclick="openInMaps(${p.lat},${p.lng})">🧭 Open Navigation</button>`;
+  if(!card){
+    card=document.createElement('div');
+    card.id='info-card';
+    card.className='info-card visible';
+    panel.insertBefore(card,panel.querySelector('.results-header'));
+  } else { card.className='info-card visible'; }
+
+  // Render card with photo strip placeholder
+  card.innerHTML=`
+    <div class="photo-strip loading" id="photo-strip-${p.id}">
+      <div class="photo-strip-placeholder"><span>🖼️</span>${t('photos_loading')}</div>
+    </div>
+    <div class="info-body">
+      <div class="info-top">
+        <div class="info-icon">${p.icon}</div>
+        <div>
+          <div class="info-name">${esc(p.name)}</div>
+          ${p.addr?`<div class="info-addr">${esc(p.addr)}</div>`:''}
+        </div>
+      </div>
+      <div class="info-stats">
+        <div class="stat-pill dist">📏 ${fmtDist(p.dist)}</div>
+        <div class="stat-pill route">${t('straight_line')}</div>
+      </div>
+      <button class="route-btn" onclick="openInMaps(${p.lat},${p.lng})">${t('nav_btn')}</button>
+    </div>`;
+
   selectedId=id;
+  // Fetch photos async
+  loadPlacePhotos(p);
 }
+
+// ══════════════════════════════════════════════
+// FETCH PHOTOS (Wikimedia Commons via OSM tags)
+// ══════════════════════════════════════════════
+async function loadPlacePhotos(p) {
+  const stripId = `photo-strip-${p.id}`;
+  const strip = document.getElementById(stripId);
+  if (!strip) return;
+
+  try {
+    const photos = [];
+
+    // 1. Check OSM wikimedia_commons tag
+    const wikiTag = p.osmTags?.wikimedia_commons;
+    if (wikiTag) {
+      const wcPhotos = await fetchWikimediaPhotos(wikiTag);
+      photos.push(...wcPhotos);
+    }
+
+    // 2. Try Wikimedia Commons search by place name + city
+    if (photos.length < 3 && p.name && p.name.length > 2) {
+      const search = encodeURIComponent(p.name);
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${search}&srnamespace=6&srlimit=6&format=json&origin=*`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const results = data?.query?.search || [];
+        for (const r of results.slice(0, 6)) {
+          if (photos.length >= 5) break;
+          const title = r.title;
+          const imgUrl = await getWikiImageUrl(title);
+          if (imgUrl) photos.push(imgUrl);
+        }
+      } catch(e) {}
+    }
+
+    // 3. Try OpenStreetMap Mapillary / street view hint (fallback: static map thumb)
+    if (photos.length === 0) {
+      // Static map thumbnail as fallback
+      const zoom = 17;
+      const mapThumb = `https://staticmap.openstreetmap.de/staticmap.php?center=${p.lat},${p.lng}&zoom=${zoom}&size=400x130&markers=${p.lat},${p.lng},red`;
+      // Note: this service may not work everywhere, so we show "no photos"
+      strip.className = 'photo-strip';
+      strip.innerHTML = `<div class="photo-strip-placeholder">📷 ${t('no_photos')}</div>`;
+      return;
+    }
+
+    // Render photos
+    strip.className = 'photo-strip has-photos';
+    strip.innerHTML = photos.map((url, i) =>
+      `<img src="${esc(url)}" loading="lazy" alt="photo ${i+1}"
+        onerror="this.style.display='none'"
+        onclick="openLightbox(${JSON.stringify(photos).replace(/"/g,'&quot;')},${i})"
+      />`
+    ).join('');
+
+  } catch(e) {
+    const strip2 = document.getElementById(stripId);
+    if (strip2) {
+      strip2.className = 'photo-strip';
+      strip2.innerHTML = `<div class="photo-strip-placeholder">📷 ${t('no_photos')}</div>`;
+    }
+  }
+}
+
+async function fetchWikimediaPhotos(tag) {
+  const photos = [];
+  try {
+    let title = tag;
+    if (tag.startsWith('Category:')) {
+      // Fetch category members
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&list=categorymembers&cmtitle=${encodeURIComponent(tag)}&cmtype=file&cmlimit=5&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const members = data?.query?.categorymembers || [];
+      for (const m of members.slice(0, 5)) {
+        const imgUrl = await getWikiImageUrl(m.title);
+        if (imgUrl) photos.push(imgUrl);
+      }
+    } else {
+      // It's a direct file
+      const imgUrl = await getWikiImageUrl(tag.startsWith('File:') ? tag : 'File:'+tag);
+      if (imgUrl) photos.push(imgUrl);
+    }
+  } catch(e) {}
+  return photos;
+}
+
+async function getWikiImageUrl(title) {
+  try {
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=600&format=json&origin=*`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const pages = data?.query?.pages || {};
+    for (const pg of Object.values(pages)) {
+      const thumb = pg?.imageinfo?.[0]?.thumburl || pg?.imageinfo?.[0]?.url;
+      if (thumb) return thumb;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ══════════════════════════════════════════════
+// LIGHTBOX
+// ══════════════════════════════════════════════
+function openLightbox(photos, idx) {
+  lightboxPhotos = photos;
+  lightboxIdx = idx;
+  document.getElementById('lightbox-img').src = photos[idx];
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox(e) {
+  if (e && e.target !== document.getElementById('lightbox') && !e.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function lightboxNav(dir) {
+  lightboxIdx = (lightboxIdx + dir + lightboxPhotos.length) % lightboxPhotos.length;
+  document.getElementById('lightbox-img').src = lightboxPhotos[lightboxIdx];
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('open');
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+  if (e.key === 'ArrowRight') lightboxNav(1);
+});
+
 function openInMaps(lat,lng){window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${lat},${lng}&travelmode=walking`,'_blank');}
 
 document.querySelectorAll('.unit-btn').forEach(btn=>{
@@ -481,7 +888,9 @@ document.querySelectorAll('.unit-btn').forEach(btn=>{
   });
 });
 
-// ═══ HISTORY ═══
+// ══════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════
 function addHistory(item){
   searchHistory.unshift(item);
   if(searchHistory.length>10)searchHistory=searchHistory.slice(0,10);
@@ -489,7 +898,10 @@ function addHistory(item){
 }
 function renderHistory(){
   const el=document.getElementById('history-list');
-  if(!searchHistory.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0;">No searches yet — use the Radar tab!</div>';return;}
+  if(!searchHistory.length){
+    el.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:6px 0;">${t('no_searches')}</div>`;
+    return;
+  }
   el.innerHTML=searchHistory.map(h=>`
     <div class="hist-item">
       <div class="hist-ico">${h.icon}</div>
@@ -498,23 +910,22 @@ function renderHistory(){
     </div>`).join('');
 }
 
-// ═══ WEATHER ═══
+// ══════════════════════════════════════════════
+// WEATHER
+// ══════════════════════════════════════════════
 function wCode2Icon(c){if(c===0)return'☀️';if(c<=2)return'⛅';if(c<=3)return'☁️';if(c<=48)return'🌫️';if(c<=57)return'🌦️';if(c<=67)return'🌧️';if(c<=77)return'❄️';if(c<=82)return'🌧️';if(c<=86)return'🌨️';if(c<=99)return'⛈️';return'🌡️';}
 function wCode2Desc(c){if(c===0)return'Clear sky';if(c<=2)return'Partly cloudy';if(c<=3)return'Overcast';if(c<=48)return'Foggy';if(c<=57)return'Drizzle';if(c<=67)return'Rain';if(c<=77)return'Snow';if(c<=82)return'Rain showers';if(c<=86)return'Snow showers';if(c<=99)return'Thunderstorm';return'Unknown';}
 
 async function loadWeather(){
   if(!userLat)return;
-  const btn=document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  // City name
+  const btn=document.getElementById('refresh-btn'); btn.classList.add('spinning');
   try{
-    const gd=await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`)).json();
+    const gd=await(await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`)).json();
     const city=gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||'Unknown';
     const cc=(gd.address?.country_code||'').toUpperCase();
     document.getElementById('w-city').textContent=city;
     document.getElementById('w-location').innerHTML=`${cc} · ${userLat.toFixed(3)}, ${userLng.toFixed(3)}`;
   }catch(e){document.getElementById('w-city').textContent='Your Location';}
-  // Weather
   try{
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}`
       +`&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,visibility,cloud_cover,uv_index`
@@ -526,33 +937,30 @@ async function loadWeather(){
     document.getElementById('w-temp').innerHTML=`${Math.round(c.temperature_2m)}<span class="w-temp-unit">°C</span>`;
     document.getElementById('w-icon').textContent=wCode2Icon(c.weather_code);
     document.getElementById('w-desc').textContent=wCode2Desc(c.weather_code);
-    document.getElementById('w-feels').textContent=`Feels like ${Math.round(c.apparent_temperature)}°C`;
+    document.getElementById('w-feels').textContent=`${t('feels_like')} ${Math.round(c.apparent_temperature)}°C`;
     document.getElementById('w-range').textContent=`${Math.round(dy.temperature_2m_min[0])}° / ${Math.round(dy.temperature_2m_max[0])}°`;
     document.getElementById('w-humid').textContent=c.relative_humidity_2m+'%';
     document.getElementById('w-wind').textContent=Math.round(c.wind_speed_10m)+' km/h';
     document.getElementById('w-vis').textContent=c.visibility>=1000?(c.visibility/1000).toFixed(0)+' km':c.visibility+' m';
     document.getElementById('w-pressure').textContent=Math.round(c.surface_pressure)+' hPa';
-    document.getElementById('w-updated').textContent='Last updated: '+new Date().toLocaleTimeString();
-    // Stats
+    document.getElementById('w-updated').textContent=t('last_updated')+' '+new Date().toLocaleTimeString();
     const uv=c.uv_index??dy.uv_index_max?.[0]??0;
     document.getElementById('s-uv').textContent=Math.round(uv);
     document.getElementById('s-uv').style.color=uv<3?'var(--green)':uv<6?'var(--orange)':'var(--red)';
-    document.getElementById('s-uv-lbl').textContent=uv<3?'Low — Safe':uv<6?'Moderate':uv<8?'High':'Very High';
+    document.getElementById('s-uv-lbl').textContent=uv<3?t('uv_low'):uv<6?t('uv_mod'):uv<8?t('uv_high'):t('uv_vhigh');
     document.getElementById('s-uv-bar').style.cssText=`width:${Math.min(uv/11*100,100)}%;background:${uv<3?'var(--green)':uv<6?'var(--orange)':'var(--red)'}`;
     const rain=dy.precipitation_probability_max?.[0]??0;
     document.getElementById('s-rain').textContent=rain+'%';
-    document.getElementById('s-rain-lbl').textContent=rain<30?'Unlikely':rain<60?'Possible':'Likely';
+    document.getElementById('s-rain-lbl').textContent=rain<30?t('rain_unlikely'):rain<60?t('rain_possible'):t('rain_likely');
     document.getElementById('s-rain-bar').style.width=rain+'%';
     const sr=dy.sunrise?.[0]?new Date(dy.sunrise[0]).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
     const ss=dy.sunset?.[0]?new Date(dy.sunset[0]).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
     document.getElementById('s-sunrise').textContent=sr;
-    document.getElementById('s-sunset').textContent='Sunset: '+ss;
+    document.getElementById('s-sunset').textContent=t('sunrise')+' '+ss;
     const cl=c.cloud_cover??0;
     document.getElementById('s-cloud').textContent=cl+'%';
     document.getElementById('s-cloud-bar').style.width=cl+'%';
-    // Hourly
-    renderHourly(d.hourly);
-    drawTempGraph(d.hourly);
+    renderHourly(d.hourly); drawTempGraph(d.hourly);
     weatherLoaded=true;
   }catch(e){document.getElementById('w-desc').textContent='Could not load weather data.';}
   btn.classList.remove('spinning');
@@ -585,25 +993,24 @@ function drawTempGraph(h){
   const mn=Math.min(...temps)-2, mx=Math.max(...temps)+2;
   const px=i=>(i/(temps.length-1))*W;
   const py=t=>H-((t-mn)/(mx-mn))*(H-20)-10;
-  // Fill
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'rgba(61,214,245,0.25)'); g.addColorStop(1,'rgba(61,214,245,0)');
   ctx.beginPath(); ctx.moveTo(px(0),py(temps[0]));
   for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}
   ctx.lineTo(px(temps.length-1),H); ctx.lineTo(0,H); ctx.closePath();
   ctx.fillStyle=g; ctx.fill();
-  // Line
   ctx.beginPath(); ctx.moveTo(px(0),py(temps[0]));
   for(let i=1;i<temps.length;i++){const cx=(px(i-1)+px(i))/2;ctx.bezierCurveTo(cx,py(temps[i-1]),cx,py(temps[i]),px(i),py(temps[i]));}
   ctx.strokeStyle='#3dd6f5'; ctx.lineWidth=2; ctx.stroke();
-  // Labels
   ctx.fillStyle='#7a8eab'; ctx.font=`10px DM Mono,monospace`; ctx.textAlign='center';
   [0,6,12,18,23].forEach(i=>{if(i<temps.length)ctx.fillText(Math.round(temps[i])+'°',px(i),py(temps[i])-5);});
 }
 
-// Auto refresh every 10min
 setInterval(()=>{if(userLat&&document.getElementById('page-dashboard').classList.contains('active'))loadWeather();},600000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ══ INIT ══
+applyLang();
 getLocation();
 </script>
 </body>
