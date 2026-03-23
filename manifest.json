@@ -1,8 +1,10 @@
 {
   "name": "NearBy Radar",
   "short_name": "NearBy",
-  "description": "Find nearby places around you",
+  "description": "Find nearby places around you — restaurants, cafés, pharmacies and more",
+  "lang": "en",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#080b12",
   "theme_color": "#080b12",
@@ -10,5 +12,22 @@
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Radar Map",
+      "short_name": "Radar",
+      "description": "Search nearby places",
+      "url": "./index.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View search history and stats",
+      "url": "./profile.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["navigation", "travel", "utilities"]
 }

@@ -20,711 +20,197 @@
     --text-muted: #5b8fa8;
     --text-dim: #2d5a7a;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Animated starfield bg */
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; overflow-x: hidden; }
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background-image:
       radial-gradient(1px 1px at 20% 30%, #ffffff22 0%, transparent 100%),
       radial-gradient(1px 1px at 80% 10%, #ffffff18 0%, transparent 100%),
       radial-gradient(1px 1px at 50% 60%, #ffffff15 0%, transparent 100%),
       radial-gradient(1px 1px at 10% 80%, #ffffff12 0%, transparent 100%),
       radial-gradient(1px 1px at 90% 70%, #ffffff10 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
 
-  /* === LAYOUT === */
-  .app-shell {
-    display: grid;
-    grid-template-columns: 240px 1fr;
-    grid-template-rows: auto 1fr;
-    min-height: 100vh;
-    position: relative;
-    z-index: 1;
-  }
+  .app-shell { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; position: relative; z-index: 1; }
 
-  /* === SIDEBAR === */
-  .sidebar {
-    grid-row: 1 / -1;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 32px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-    overflow: hidden;
-  }
+  /* SIDEBAR */
+  .sidebar { grid-row: 1 / -1; background: var(--surface); border-right: 1px solid var(--border); padding: 32px 20px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+  .sidebar::after { content: ''; position: absolute; bottom: -60px; right: -60px; width: 180px; height: 180px; border: 1px solid var(--radar-dim); border-radius: 50%; animation: pulse-slow 4s ease-in-out infinite; }
+  .sidebar::before { content: ''; position: absolute; bottom: -100px; right: -100px; width: 260px; height: 260px; border: 1px solid #00ff8811; border-radius: 50%; animation: pulse-slow 4s ease-in-out infinite 1s; }
+  @keyframes pulse-slow { 0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.05)} }
 
-  .sidebar::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; right: -60px;
-    width: 180px; height: 180px;
-    border: 1px solid var(--radar-dim);
-    border-radius: 50%;
-    animation: pulse-slow 4s ease-in-out infinite;
-  }
-  .sidebar::before {
-    content: '';
-    position: absolute;
-    bottom: -100px; right: -100px;
-    width: 260px; height: 260px;
-    border: 1px solid #00ff8811;
-    border-radius: 50%;
-    animation: pulse-slow 4s ease-in-out infinite 1s;
-  }
-
-  @keyframes pulse-slow {
-    0%, 100% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo-icon {
-    width: 36px; height: 36px;
-    border: 2px solid var(--radar-green);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-  }
-  .logo-icon::after {
-    content: '';
-    position: absolute;
-    width: 14px; height: 2px;
-    background: var(--radar-green);
-    transform-origin: left center;
-    left: 50%; top: 50%; margin-top: -1px;
-    animation: radar-spin 2s linear infinite;
-    box-shadow: 0 0 8px var(--radar-green);
-  }
-  @keyframes radar-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .logo:hover { opacity: 0.85; }
+  .logo-icon { width: 36px; height: 36px; border: 2px solid var(--radar-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+  .logo-icon::after { content: ''; position: absolute; width: 14px; height: 2px; background: var(--radar-green); transform-origin: left center; left: 50%; top: 50%; margin-top: -1px; animation: radar-spin 2s linear infinite; box-shadow: 0 0 8px var(--radar-green); }
+  @keyframes radar-spin { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
   .logo-text { font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--text); }
   .logo-sub { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--radar-green); letter-spacing: 4px; }
 
-  .nav-section-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 3px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    padding: 16px 8px 6px;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-    position: relative;
-  }
-  .nav-item:hover {
-    background: var(--surface2);
-    color: var(--text);
-    border-color: var(--border);
-  }
-  .nav-item.active {
-    background: #00ff8810;
-    color: var(--radar-green);
-    border-color: #00ff8830;
-  }
+  .nav-section-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; padding: 16px 8px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 600; transition: all 0.2s; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); border-color: var(--border); }
+  .nav-item.active { background: #00ff8810; color: var(--radar-green); border-color: #00ff8830; }
   .nav-item.active .nav-icon { filter: drop-shadow(0 0 4px var(--radar-green)); }
-
   .nav-icon { width: 18px; text-align: center; font-size: 16px; }
+  .nav-badge { margin-left: auto; background: var(--accent-orange); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; font-family: 'Space Mono', monospace; }
 
-  .nav-badge {
-    margin-left: auto;
-    background: var(--accent-orange);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-family: 'Space Mono', monospace;
-  }
-
-  .sidebar-footer {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-
-  .sidebar-avatar-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 8px;
-  }
-  .sidebar-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-blue), var(--radar-green));
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 14px; color: var(--bg);
-    flex-shrink: 0;
-  }
+  .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+  .sidebar-avatar-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; }
+  .sidebar-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-blue), var(--radar-green)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--bg); flex-shrink: 0; }
   .sidebar-name { font-size: 13px; font-weight: 700; }
-  .sidebar-status {
-    font-size: 10px; color: var(--radar-green);
-    font-family: 'Space Mono', monospace;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .status-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--radar-green);
-    animation: blink 1.5s ease-in-out infinite;
-  }
+  .sidebar-status { font-size: 10px; color: var(--radar-green); font-family: 'Space Mono', monospace; display: flex; align-items: center; gap: 4px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--radar-green); animation: blink 1.5s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
 
-  /* === TOPBAR === */
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 32px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .topbar-title {
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 1px;
-  }
+  /* TOPBAR */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .topbar-title { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
   .topbar-title span { color: var(--radar-green); }
-
   .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-time { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; }
 
-  .topbar-time {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--text-muted);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 6px 14px;
-    border-radius: 20px;
-  }
-
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-  }
-  .btn-primary {
-    background: var(--radar-green);
-    color: var(--bg);
-    box-shadow: 0 0 20px var(--radar-glow);
-  }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; }
+  .btn-primary { background: var(--radar-green); color: var(--bg); box-shadow: 0 0 20px var(--radar-glow); }
   .btn-primary:hover { box-shadow: 0 0 30px var(--radar-green); transform: translateY(-1px); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
   .btn-ghost:hover { background: var(--surface2); color: var(--text); }
 
-  /* === MAIN === */
-  .main {
-    padding: 32px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
+  /* MAIN */
+  .main { padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 28px; }
 
-  /* === PROFILE HERO === */
-  .profile-hero {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 28px;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
+  /* PROFILE HERO */
+  .profile-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; position: relative; overflow: hidden; }
+  .profile-hero::before { content: ''; position: absolute; top: -80px; right: -80px; width: 300px; height: 300px; border: 1px solid var(--radar-dim); border-radius: 50%; pointer-events: none; }
+  .profile-hero::after { content: ''; position: absolute; top: -130px; right: -130px; width: 400px; height: 400px; border: 1px solid #00ff8810; border-radius: 50%; pointer-events: none; }
 
-  .profile-hero::before {
-    content: '';
-    position: absolute;
-    top: -80px; right: -80px;
-    width: 300px; height: 300px;
-    border: 1px solid var(--radar-dim);
-    border-radius: 50%;
-    pointer-events: none;
-  }
-  .profile-hero::after {
-    content: '';
-    position: absolute;
-    top: -130px; right: -130px;
-    width: 400px; height: 400px;
-    border: 1px solid #00ff8810;
-    border-radius: 50%;
-    pointer-events: none;
-  }
+  .avatar-wrap { position: relative; width: 96px; height: 96px; }
+  .avatar-wrap::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(var(--radar-green) 0%, transparent 60%, var(--radar-green) 100%); animation: radar-spin 3s linear infinite; }
+  .avatar-img { position: absolute; inset: 3px; border-radius: 50%; background: linear-gradient(135deg, #1a3a5c, #0b1e35); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: var(--radar-green); z-index: 1; border: 2px solid var(--bg); }
 
-  .avatar-wrap {
-    position: relative;
-    width: 96px; height: 96px;
-  }
-  .avatar-wrap::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    background: conic-gradient(var(--radar-green) 0%, transparent 60%, var(--radar-green) 100%);
-    animation: radar-spin 3s linear infinite;
-  }
-  .avatar-img {
-    position: absolute;
-    inset: 3px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #1a3a5c, #0b1e35);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px; font-weight: 800; color: var(--radar-green);
-    z-index: 1;
-    border: 2px solid var(--bg);
-  }
-
-  .profile-info { }
   .profile-name { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
-  .profile-handle {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--radar-green);
-    margin-bottom: 12px;
-  }
+  .profile-handle { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--radar-green); margin-bottom: 12px; }
   .profile-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-  .tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid;
-    letter-spacing: 1px;
-  }
+  .tag { font-family: 'Space Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 20px; border: 1px solid; letter-spacing: 1px; }
   .tag-blue { border-color: var(--accent-blue); color: var(--accent-blue); }
   .tag-green { border-color: var(--radar-green); color: var(--radar-green); }
   .tag-orange { border-color: var(--accent-orange); color: var(--accent-orange); }
 
-  .profile-stats {
-    display: flex; flex-direction: column; gap: 12px;
-    text-align: center;
-    min-width: 140px;
-  }
+  .profile-stats { display: flex; flex-direction: column; gap: 12px; text-align: center; min-width: 140px; }
   .stat-row { display: flex; gap: 12px; }
-  .stat-box {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 10px;
-    text-align: center;
-  }
-  .stat-val {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--radar-green);
-    font-family: 'Space Mono', monospace;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .stat-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
+  .stat-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .stat-val { font-size: 24px; font-weight: 800; color: var(--radar-green); font-family: 'Space Mono', monospace; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
 
-  /* === GRID === */
+  /* GRID & CARD */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  /* === CARD === */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-  }
-  .card-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  .card-title {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .card-title::before {
-    content: '';
-    width: 3px; height: 14px;
-    background: var(--radar-green);
-    border-radius: 2px;
-    box-shadow: 0 0 8px var(--radar-green);
-  }
-  .card-action {
-    font-size: 11px;
-    color: var(--accent-blue);
-    cursor: pointer;
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 1px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .card-title { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+  .card-title::before { content: ''; width: 3px; height: 14px; background: var(--radar-green); border-radius: 2px; box-shadow: 0 0 8px var(--radar-green); }
+  .card-action { font-size: 11px; color: var(--accent-blue); cursor: pointer; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
   .card-action:hover { text-decoration: underline; }
 
-  /* === HISTORY LIST === */
-  .history-item {
-    display: grid;
-    grid-template-columns: 36px 1fr auto;
-    gap: 14px;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-    transition: all 0.2s;
-    cursor: pointer;
-  }
+  /* HISTORY LIST */
+  .history-item { display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); transition: all 0.2s; cursor: pointer; }
   .history-item:last-child { border-bottom: none; }
   .history-item:hover { padding-left: 6px; }
-
-  .history-icon {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    transition: all 0.2s;
-  }
-  .history-item:hover .history-icon {
-    border-color: var(--radar-green);
-    box-shadow: 0 0 10px var(--radar-dim);
-  }
-
+  .history-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; }
+  .history-item:hover .history-icon { border-color: var(--radar-green); box-shadow: 0 0 10px var(--radar-dim); }
   .history-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-  .history-meta {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--text-muted);
-    display: flex; gap: 10px;
-  }
+  .history-meta { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); display: flex; gap: 10px; }
   .history-right { text-align: right; }
-  .history-time {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-bottom: 4px;
-  }
-  .history-count {
-    font-size: 11px;
-    color: var(--text-muted);
-    background: var(--surface2);
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-  }
+  .history-time { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; }
+  .history-count { font-size: 11px; color: var(--text-muted); background: var(--surface2); padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); }
 
-  /* === MAP ACTIVITY HEATMAP === */
-  .heatmap {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 4px;
-    margin-top: 8px;
-  }
+  /* HEATMAP */
+  .heatmap { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 8px; }
   .heatmap-col { display: flex; flex-direction: column; gap: 4px; }
-  .heatmap-cell {
-    width: 100%; aspect-ratio: 1;
-    border-radius: 3px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    transition: all 0.3s;
-    cursor: pointer;
-  }
+  .heatmap-cell { width: 100%; aspect-ratio: 1; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); transition: all 0.3s; cursor: pointer; }
   .heatmap-cell:hover { transform: scale(1.3); z-index: 2; }
   .heatmap-cell.lvl1 { background: #00ff8820; border-color: #00ff8830; }
   .heatmap-cell.lvl2 { background: #00ff8840; border-color: #00ff8860; }
   .heatmap-cell.lvl3 { background: #00ff8870; border-color: #00ff88aa; }
   .heatmap-cell.lvl4 { background: var(--radar-green); border-color: var(--radar-green); box-shadow: 0 0 8px var(--radar-glow); }
+  .heatmap-labels { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 6px; }
+  .heatmap-month { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-dim); text-align: center; }
 
-  .heatmap-labels {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 4px;
-    margin-top: 6px;
-  }
-  .heatmap-month {
-    font-family: 'Space Mono', monospace;
-    font-size: 8px;
-    color: var(--text-dim);
-    text-align: center;
-    letter-spacing: 0;
-  }
-
-  /* === FAVORITE PLACES === */
+  /* FAVORITES */
   .fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .fav-item {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .fav-item:hover {
-    border-color: var(--radar-green);
-    box-shadow: 0 0 16px var(--radar-dim);
-  }
-  .fav-item::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--radar-green), transparent);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
+  .fav-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .fav-item:hover { border-color: var(--radar-green); box-shadow: 0 0 16px var(--radar-dim); }
+  .fav-item::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--radar-green), transparent); opacity: 0; transition: opacity 0.2s; }
   .fav-item:hover::before { opacity: 1; }
-
   .fav-emoji { font-size: 24px; margin-bottom: 8px; }
   .fav-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .fav-detail {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--text-muted);
-  }
-  .fav-visits {
-    position: absolute;
-    top: 10px; right: 10px;
-    background: var(--radar-dim);
-    border: 1px solid var(--radar-glow);
-    color: var(--radar-green);
-    font-size: 10px;
-    font-family: 'Space Mono', monospace;
-    padding: 2px 7px;
-    border-radius: 10px;
-  }
+  .fav-detail { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); }
+  .fav-visits { position: absolute; top: 10px; right: 10px; background: var(--radar-dim); border: 1px solid var(--radar-glow); color: var(--radar-green); font-size: 10px; font-family: 'Space Mono', monospace; padding: 2px 7px; border-radius: 10px; }
 
-  /* === RADAR CHART placeholder === */
-  .radar-vis {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    margin: 0 auto;
-  }
-  .radar-ring {
-    position: absolute;
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .radar-sweep {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: conic-gradient(transparent 0deg, var(--radar-dim) 30deg, transparent 60deg);
-    animation: radar-spin 3s linear infinite;
-  }
-  .radar-dot {
-    position: absolute;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--radar-green);
-    box-shadow: 0 0 10px var(--radar-green);
-    transform: translate(-50%, -50%);
-  }
-  .radar-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--radar-green);
-    box-shadow: 0 0 16px var(--radar-green);
-  }
+  /* RADAR VIS */
+  .radar-vis { position: relative; width: 160px; height: 160px; margin: 0 auto; }
+  .radar-ring { position: absolute; border: 1px solid var(--border); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .radar-sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(transparent 0deg, var(--radar-dim) 30deg, transparent 60deg); animation: radar-spin 3s linear infinite; }
+  .radar-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--radar-green); box-shadow: 0 0 10px var(--radar-green); transform: translate(-50%, -50%); }
+  .radar-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; background: var(--radar-green); box-shadow: 0 0 16px var(--radar-green); }
 
-  /* === CATEGORY BAR CHART === */
-  .cat-bar-row {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 12px;
-  }
+  /* CAT BARS */
+  .cat-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .cat-bar-label { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
   .cat-bar-name { font-size: 12px; font-weight: 600; width: 90px; flex-shrink: 0; }
-  .cat-bar-track {
-    flex: 1;
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .cat-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--radar-green), var(--accent-blue));
-    box-shadow: 0 0 6px var(--radar-glow);
-    animation: bar-grow 1s ease-out forwards;
-    transform-origin: left;
-  }
-  @keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  .cat-bar-count {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    width: 30px;
-    text-align: right;
-    flex-shrink: 0;
-  }
+  .cat-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .cat-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--radar-green), var(--accent-blue)); box-shadow: 0 0 6px var(--radar-glow); animation: bar-grow 1s ease-out forwards; transform-origin: left; }
+  @keyframes bar-grow { from{transform:scaleX(0)}to{transform:scaleX(1)} }
+  .cat-bar-count { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); width: 30px; text-align: right; flex-shrink: 0; }
 
-  /* === ACCOUNT FORM === */
+  /* FORM */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-group { display: flex; flex-direction: column; gap: 6px; }
   .form-group.full { grid-column: 1 / -1; }
-  .form-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-  .form-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s;
-  }
-  .form-input:focus {
-    border-color: var(--radar-green);
-    box-shadow: 0 0 0 3px var(--radar-dim);
-  }
+  .form-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+  .form-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px; outline: none; transition: all 0.2s; }
+  .form-input:focus { border-color: var(--radar-green); box-shadow: 0 0 0 3px var(--radar-dim); }
   .form-input::placeholder { color: var(--text-dim); }
 
-  .toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .toggle-row:last-child { border-bottom: none; }
-  .toggle-info { }
   .toggle-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
   .toggle-desc { font-size: 11px; color: var(--text-muted); }
-  .toggle {
-    width: 44px; height: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.3s;
-    flex-shrink: 0;
-  }
+  .toggle { width: 44px; height: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; position: relative; transition: all 0.3s; flex-shrink: 0; }
   .toggle.on { background: var(--radar-green); border-color: var(--radar-green); box-shadow: 0 0 12px var(--radar-glow); }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: white;
-    top: 2px; left: 2px;
-    transition: all 0.3s;
-  }
+  .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: all 0.3s; }
   .toggle.on::after { left: 22px; }
 
-  /* === TABS === */
+  /* TABS */
   .tabs { display: flex; gap: 4px; margin-bottom: 24px; }
-  .tab {
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    color: var(--text-muted);
-    border: 1px solid transparent;
-    transition: all 0.2s;
-  }
+  .tab { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); border: 1px solid transparent; transition: all 0.2s; }
   .tab:hover { background: var(--surface2); color: var(--text); }
-  .tab.active {
-    background: #00ff8812;
-    color: var(--radar-green);
-    border-color: #00ff8830;
-  }
+  .tab.active { background: #00ff8812; color: var(--radar-green); border-color: #00ff8830; }
 
-  /* === ACHIEVEMENT BADGES === */
+  /* BADGES */
   .badges { display: flex; gap: 10px; flex-wrap: wrap; }
-  .badge {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    padding: 16px 14px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    min-width: 80px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
+  .badge { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; min-width: 80px; cursor: pointer; transition: all 0.2s; }
   .badge:hover { border-color: var(--radar-green); transform: translateY(-2px); }
   .badge.earned { border-color: #ffd70040; background: #ffd70008; }
   .badge-icon { font-size: 28px; }
   .badge-name { font-size: 10px; font-weight: 700; text-align: center; color: var(--text-muted); }
   .badge.earned .badge-name { color: #ffd700; }
 
-  /* === TABS PANELS === */
+  /* EMPTY STATE */
+  .empty-state { padding: 32px; text-align: center; color: var(--text-muted); font-family: 'Space Mono', monospace; font-size: 12px; }
+  .empty-state a { color: var(--radar-green); text-decoration: none; }
+  .empty-state a:hover { text-decoration: underline; }
+
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* SCROLLBAR */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-  /* Responsive */
   @media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
     .sidebar { display: none; }
@@ -734,12 +220,11 @@
 </style>
 </head>
 <body>
-
 <div class="app-shell">
 
   <!-- SIDEBAR -->
   <nav class="sidebar">
-    <div class="logo">
+    <div class="logo" onclick="location.href='./index.html'">
       <div class="logo-icon"></div>
       <div>
         <div class="logo-text">NearBy</div>
@@ -748,7 +233,7 @@
     </div>
 
     <div class="nav-section-label">Navigation</div>
-    <div class="nav-item" onclick="location.href='https://redar-finding.netlify.app/'">
+    <div class="nav-item" onclick="location.href='./index.html'">
       <span class="nav-icon">🗺️</span> Radar Map
     </div>
     <div class="nav-item active">
@@ -756,29 +241,22 @@
     </div>
     <div class="nav-item">
       <span class="nav-icon">❤️</span> Saved Places
-      <span class="nav-badge">8</span>
+      <span class="nav-badge" id="saved-badge">0</span>
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="openTab('history')">
       <span class="nav-icon">🕐</span> History
-    </div>
-    <div class="nav-item">
-      <span class="nav-icon">🔔</span> Alerts
-      <span class="nav-badge">3</span>
     </div>
 
     <div class="nav-section-label">Settings</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="openTab('settings')">
       <span class="nav-icon">⚙️</span> Preferences
-    </div>
-    <div class="nav-item">
-      <span class="nav-icon">🔒</span> Privacy
     </div>
 
     <div class="sidebar-footer">
       <div class="sidebar-avatar-row">
-        <div class="sidebar-avatar">AJ</div>
+        <div class="sidebar-avatar" id="sidebar-initials">—</div>
         <div>
-          <div class="sidebar-name">Alex Johnson</div>
+          <div class="sidebar-name" id="sidebar-name">Explorer</div>
           <div class="sidebar-status"><div class="status-dot"></div> ONLINE</div>
         </div>
       </div>
@@ -791,7 +269,7 @@
     <div class="topbar-right">
       <div class="topbar-time" id="clock">--:--:--</div>
       <button class="btn btn-ghost" onclick="openTab('settings')">✏️ Edit Profile</button>
-      <button class="btn btn-primary" onclick="location.href='https://redar-finding.netlify.app/'">⬡ Launch Radar</button>
+      <a class="btn btn-primary" href="./index.html">⬡ Launch Radar</a>
     </div>
   </header>
 
@@ -801,35 +279,33 @@
     <!-- PROFILE HERO -->
     <div class="profile-hero">
       <div class="avatar-wrap">
-        <div class="avatar-img">AJ</div>
+        <div class="avatar-img" id="hero-initials">?</div>
       </div>
       <div class="profile-info">
-        <div class="profile-name">Alex Johnson</div>
-        <div class="profile-handle">@alex.radar · Member since Jan 2024</div>
-        <div class="profile-tags">
+        <div class="profile-name" id="hero-name">Explorer</div>
+        <div class="profile-handle" id="hero-handle">@nearby.user</div>
+        <div class="profile-tags" id="hero-tags">
           <span class="tag tag-green">📍 Explorer</span>
-          <span class="tag tag-blue">☕ Café Hopper</span>
-          <span class="tag tag-orange">🍜 Foodie</span>
         </div>
       </div>
       <div class="profile-stats">
         <div class="stat-row">
           <div class="stat-box">
-            <div class="stat-val">247</div>
+            <div class="stat-val" id="stat-searches">0</div>
             <div class="stat-label">Searches</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">38</div>
-            <div class="stat-label">Saved</div>
+            <div class="stat-val" id="stat-places">0</div>
+            <div class="stat-label">Places</div>
           </div>
         </div>
         <div class="stat-row">
           <div class="stat-box">
-            <div class="stat-val">12</div>
-            <div class="stat-label">Cities</div>
+            <div class="stat-val" id="stat-types">0</div>
+            <div class="stat-label">Types</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">9</div>
+            <div class="stat-val" id="stat-badges">0</div>
             <div class="stat-label">Badges</div>
           </div>
         </div>
@@ -847,8 +323,6 @@
     <!-- OVERVIEW TAB -->
     <div class="tab-panel active" id="tab-overview">
       <div class="grid-3">
-
-        <!-- RECENT SEARCHES -->
         <div class="card" style="grid-column: 1 / 3;">
           <div class="card-header">
             <div class="card-title">Recent Searches</div>
@@ -856,12 +330,8 @@
           </div>
           <div id="recent-list"></div>
         </div>
-
-        <!-- RADAR ACTIVITY -->
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Live Radar</div>
-          </div>
+          <div class="card-header"><div class="card-title">Live Radar</div></div>
           <div class="radar-vis">
             <div class="radar-ring" style="width:40px;height:40px;"></div>
             <div class="radar-ring" style="width:80px;height:80px;"></div>
@@ -869,24 +339,21 @@
             <div class="radar-ring" style="width:160px;height:160px;"></div>
             <div class="radar-sweep"></div>
             <div class="radar-center"></div>
-            <div class="radar-dot" style="top:30%;left:60%;" title="Café nearby"></div>
-            <div class="radar-dot" style="top:55%;left:70%;background:var(--accent-blue);box-shadow:0 0 10px var(--accent-blue);" title="Restaurant"></div>
-            <div class="radar-dot" style="top:70%;left:40%;background:var(--accent-orange);box-shadow:0 0 10px var(--accent-orange);" title="Pharmacy"></div>
+            <div class="radar-dot" style="top:30%;left:60%;"></div>
+            <div class="radar-dot" style="top:55%;left:70%;background:var(--accent-blue);box-shadow:0 0 10px var(--accent-blue);"></div>
+            <div class="radar-dot" style="top:70%;left:40%;background:var(--accent-orange);box-shadow:0 0 10px var(--accent-orange);"></div>
           </div>
           <div style="text-align:center;margin-top:12px;">
-            <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);">3 PLACES IN RANGE</div>
+            <a href="./index.html" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--radar-green);text-decoration:none;">→ OPEN RADAR MAP</a>
           </div>
         </div>
-
       </div>
 
       <div class="grid-2" style="margin-top:20px;">
-
-        <!-- SEARCH ACTIVITY HEATMAP -->
         <div class="card">
           <div class="card-header">
             <div class="card-title">Search Activity</div>
-            <div class="card-action">2024</div>
+            <div class="card-action" id="heatmap-year">—</div>
           </div>
           <div class="heatmap" id="heatmap"></div>
           <div class="heatmap-labels" id="heatmap-labels"></div>
@@ -900,24 +367,10 @@
             <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);">More</span>
           </div>
         </div>
-
-        <!-- TOP CATEGORIES -->
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Top Categories</div>
-          </div>
+          <div class="card-header"><div class="card-title">Top Categories</div></div>
           <div id="cat-bars"></div>
         </div>
-
-      </div>
-
-      <!-- FAVORITE PLACES -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Saved Places</div>
-          <div class="card-action">Manage →</div>
-        </div>
-        <div class="fav-grid" id="fav-grid"></div>
       </div>
     </div>
 
@@ -926,7 +379,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Full Search History</div>
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;">🗑 Clear All</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;" onclick="clearHistory()">🗑 Clear All</button>
         </div>
         <div id="history-full"></div>
       </div>
@@ -937,7 +390,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Achievements</div>
-          <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-muted);">9 / 16 earned</div>
+          <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-muted);" id="badge-count-label">0 / 16 earned</div>
         </div>
         <div class="badges" id="badges-grid"></div>
       </div>
@@ -947,38 +400,25 @@
     <div class="tab-panel" id="tab-settings">
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Personal Info</div>
-          </div>
+          <div class="card-header"><div class="card-title">Personal Info</div></div>
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">First Name</label>
-              <input class="form-input" type="text" value="Alex">
+              <label class="form-label">Display Name</label>
+              <input class="form-input" type="text" id="input-name" placeholder="Your name">
             </div>
             <div class="form-group">
-              <label class="form-label">Last Name</label>
-              <input class="form-input" type="text" value="Johnson">
-            </div>
-            <div class="form-group full">
-              <label class="form-label">Email</label>
-              <input class="form-input" type="email" value="alex@example.com">
-            </div>
-            <div class="form-group full">
-              <label class="form-label">Username</label>
-              <input class="form-input" type="text" value="alex.radar">
+              <label class="form-label">Handle</label>
+              <input class="form-input" type="text" id="input-handle" placeholder="@username">
             </div>
             <div class="form-group full">
               <label class="form-label">Bio</label>
-              <input class="form-input" type="text" placeholder="Tell us about your exploring style…">
+              <input class="form-input" type="text" id="input-bio" placeholder="Explorer, Café hopper…">
             </div>
           </div>
-          <button class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center;">Save Changes</button>
+          <button class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center;" onclick="saveProfile()">Save Changes</button>
         </div>
-
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Preferences</div>
-          </div>
+          <div class="card-header"><div class="card-title">Preferences</div></div>
           <div id="toggles"></div>
         </div>
       </div>
@@ -988,151 +428,231 @@
 </div>
 
 <script>
-// ===================== DATA =====================
-const searches = [
-  { icon: '☕', name: 'Café / Coffee', time: '2 hours ago', count: 12, dist: '0.5 km', category: 'café' },
-  { icon: '🍜', name: 'Restaurant', time: '5 hours ago', count: 7, dist: '1.2 km', category: 'restaurant' },
-  { icon: '💊', name: 'Pharmacy', time: 'Yesterday', count: 3, dist: '0.3 km', category: 'pharmacy' },
-  { icon: '🏪', name: 'Convenience Store', time: '2 days ago', count: 5, dist: '0.8 km', category: 'convenience' },
-  { icon: '🏥', name: 'Hospital', time: '3 days ago', count: 2, dist: '2.1 km', category: 'hospital' },
-  { icon: '⛽', name: 'Gas Station', time: '4 days ago', count: 4, dist: '0.6 km', category: 'gas' },
-  { icon: '🛒', name: 'Supermarket', time: '5 days ago', count: 8, dist: '1.0 km', category: 'supermarket' },
-  { icon: '🏨', name: 'Hotel', time: '1 week ago', count: 6, dist: '3.4 km', category: 'hotel' },
-];
+// ═══ READ DATA FROM localStorage (shared with index.html) ═══
+const HISTORY_KEY = 'nb_history';
+const PROFILE_KEY = 'nb_profile';
+const LANG_KEY    = 'nb_lang';
 
-const categories = [
-  { icon: '☕', name: 'Café', pct: 0.88, count: 42 },
-  { icon: '🍜', name: 'Restaurant', pct: 0.72, count: 35 },
-  { icon: '🛒', name: 'Supermarket', pct: 0.55, count: 27 },
-  { icon: '💊', name: 'Pharmacy', pct: 0.38, count: 18 },
-  { icon: '🏪', name: 'Convenience', pct: 0.25, count: 12 },
-];
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function getProfile() {
+  const def = { name: 'Explorer', handle: '@nearby.user', bio: '' };
+  try { return { ...def, ...JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') }; } catch { return def; }
+}
+function saveProfile() {
+  const name   = document.getElementById('input-name').value.trim() || 'Explorer';
+  const handle = document.getElementById('input-handle').value.trim() || '@nearby.user';
+  const bio    = document.getElementById('input-bio').value.trim();
+  localStorage.setItem(PROFILE_KEY, JSON.stringify({ name, handle, bio }));
+  applyProfile({ name, handle, bio });
+  // show feedback
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '✓ Saved!';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
 
-const favorites = [
-  { icon: '☕', name: 'Blue Bottle Coffee', detail: '0.5 km · Open now', visits: '14x' },
-  { icon: '🍜', name: 'Ramen Ichiban', detail: '1.2 km · Open now', visits: '9x' },
-  { icon: '🏥', name: 'City Medical Center', detail: '2.1 km', visits: '2x' },
-  { icon: '🛒', name: 'FreshMart', detail: '0.8 km · Open now', visits: '22x' },
-  { icon: '🏨', name: 'Grand Sky Hotel', detail: '3.4 km', visits: '1x' },
-  { icon: '⛽', name: 'Shell Station', detail: '0.6 km · 24h', visits: '6x' },
-];
+function timeAgo(ts) {
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
 
-const badges = [
-  { icon: '🥇', name: 'First Search', earned: true },
-  { icon: '🗺️', name: 'Explorer', earned: true },
-  { icon: '☕', name: 'Café Hopper', earned: true },
-  { icon: '🍜', name: 'Foodie', earned: true },
-  { icon: '🌆', name: '5 Cities', earned: true },
-  { icon: '🔭', name: '100 Searches', earned: true },
-  { icon: '❤️', name: 'Collector', earned: true },
-  { icon: '⚡', name: 'Speed Scout', earned: true },
-  { icon: '🌟', name: 'Power User', earned: true },
-  { icon: '🏔️', name: '10 Cities', earned: false },
-  { icon: '🚀', name: '500 Searches', earned: false },
-  { icon: '💎', name: 'Diamond', earned: false },
-  { icon: '🌍', name: 'World Tour', earned: false },
-  { icon: '🦅', name: 'Night Owl', earned: false },
-  { icon: '🎯', name: 'Precision', earned: false },
-  { icon: '👑', name: 'Legend', earned: false },
-];
-
-const toggleSettings = [
-  { title: 'Location Tracking', desc: 'Allow app to track your position', on: true },
-  { title: 'Search History', desc: 'Save your search sessions', on: true },
-  { title: 'Push Notifications', desc: 'Get alerts for nearby places', on: false },
-  { title: 'Radar Pings', desc: 'Notify when saved places are nearby', on: true },
-  { title: 'Dark Mode', desc: 'Use dark interface theme', on: true },
-  { title: 'Metric Units', desc: 'Use kilometers instead of miles', on: true },
-];
-
-// ===================== RENDER =====================
-
-// Recent searches (overview, top 4)
-function renderSearchItem(s) {
+// ═══ RENDER HISTORY ITEM ═══
+function renderHistoryItem(h) {
   return `<div class="history-item">
-    <div class="history-icon">${s.icon}</div>
+    <div class="history-icon">${h.icon}</div>
     <div>
-      <div class="history-name">${s.name}</div>
-      <div class="history-meta"><span>📍 ${s.dist}</span><span>🔍 ${s.count} results</span></div>
+      <div class="history-name">${h.label}</div>
+      <div class="history-meta"><span>📍 ${h.radius || '—'}</span><span>🔍 ${h.count} results</span></div>
     </div>
     <div class="history-right">
-      <div class="history-time">${s.time}</div>
-      <div class="history-count">${s.count} found</div>
+      <div class="history-time">${timeAgo(h.time)}</div>
+      <div class="history-count">${h.count} found</div>
     </div>
   </div>`;
 }
 
-document.getElementById('recent-list').innerHTML = searches.slice(0,4).map(renderSearchItem).join('');
-document.getElementById('history-full').innerHTML = searches.map(renderSearchItem).join('');
-
-// Category bars
-document.getElementById('cat-bars').innerHTML = categories.map((c, i) =>
-  `<div class="cat-bar-row" style="animation-delay:${i*0.1}s">
-    <div class="cat-bar-label">${c.icon}</div>
-    <div class="cat-bar-name">${c.name}</div>
-    <div class="cat-bar-track">
-      <div class="cat-bar-fill" style="width:${c.pct*100}%;animation-delay:${i*0.15}s"></div>
-    </div>
-    <div class="cat-bar-count">${c.count}</div>
-  </div>`
-).join('');
-
-// Favorites
-document.getElementById('fav-grid').innerHTML = favorites.map(f =>
-  `<div class="fav-item">
-    <div class="fav-emoji">${f.icon}</div>
-    <div class="fav-name">${f.name}</div>
-    <div class="fav-detail">${f.detail}</div>
-    <div class="fav-visits">${f.visits}</div>
-  </div>`
-).join('');
-
-// Heatmap
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const heatmap = document.getElementById('heatmap');
-const heatmapLabels = document.getElementById('heatmap-labels');
-for (let m = 0; m < 12; m++) {
-  const col = document.createElement('div');
-  col.className = 'heatmap-col';
-  for (let w = 0; w < 4; w++) {
-    const cell = document.createElement('div');
-    const r = Math.random();
-    let lvl = '';
-    if (r > 0.85) lvl = 'lvl4';
-    else if (r > 0.65) lvl = 'lvl3';
-    else if (r > 0.45) lvl = 'lvl2';
-    else if (r > 0.25) lvl = 'lvl1';
-    cell.className = 'heatmap-cell ' + lvl;
-    col.appendChild(cell);
-  }
-  heatmap.appendChild(col);
-
-  const lbl = document.createElement('div');
-  lbl.className = 'heatmap-month';
-  lbl.textContent = months[m];
-  heatmapLabels.appendChild(lbl);
+function emptyHistoryHTML() {
+  return `<div class="empty-state">No searches yet.<br><br><a href="./index.html">→ Open Radar Map</a> to start searching.</div>`;
 }
 
-// Badges
-document.getElementById('badges-grid').innerHTML = badges.map(b =>
-  `<div class="badge${b.earned ? ' earned' : ''}" title="${b.earned ? 'Earned!' : 'Locked'}">
-    <div class="badge-icon" style="${b.earned ? '' : 'filter:grayscale(1);opacity:0.3'}">${b.icon}</div>
-    <div class="badge-name">${b.name}</div>
-  </div>`
-).join('');
+// ═══ APPLY PROFILE ═══
+function applyProfile(p) {
+  const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  document.getElementById('hero-initials').textContent   = initials;
+  document.getElementById('sidebar-initials').textContent = initials;
+  document.getElementById('hero-name').textContent       = p.name;
+  document.getElementById('sidebar-name').textContent    = p.name;
+  document.getElementById('hero-handle').textContent     = p.handle;
+  document.getElementById('input-name').value   = p.name;
+  document.getElementById('input-handle').value = p.handle;
+  document.getElementById('input-bio').value    = p.bio;
+}
 
-// Toggles
-document.getElementById('toggles').innerHTML = toggleSettings.map((t, i) =>
-  `<div class="toggle-row">
+// ═══ COMPUTE STATS FROM HISTORY ═══
+function computeStats(history) {
+  const totalSearches = history.length;
+  const totalPlaces   = history.reduce((s, h) => s + (h.count || 0), 0);
+  const types         = new Set(history.map(h => h.label)).size;
+  return { totalSearches, totalPlaces, types };
+}
+
+// ═══ CATEGORY BREAKDOWN ═══
+function computeCategories(history) {
+  const counts = {};
+  history.forEach(h => {
+    counts[h.label] = (counts[h.label] || { icon: h.icon, count: 0 });
+    counts[h.label].count += h.count || 0;
+  });
+  return Object.entries(counts)
+    .map(([label, v]) => ({ icon: v.icon, name: label, count: v.count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+}
+
+// ═══ BADGES ═══
+const BADGE_DEFS = [
+  { icon: '🥇', name: 'First Search',  check: h => h.length >= 1 },
+  { icon: '🗺️', name: 'Explorer',      check: h => h.length >= 5 },
+  { icon: '☕', name: 'Café Hopper',   check: h => h.some(x => x.label.toLowerCase().includes('caf')) },
+  { icon: '🍜', name: 'Foodie',        check: h => h.some(x => x.label.toLowerCase().includes('restaurant')) },
+  { icon: '💊', name: 'Health First',  check: h => h.some(x => x.label.toLowerCase().includes('pharma') || x.label.toLowerCase().includes('hospital')) },
+  { icon: '⛽', name: 'Road Tripper',  check: h => h.some(x => x.label.toLowerCase().includes('gas')) },
+  { icon: '🔭', name: '10 Searches',   check: h => h.length >= 10 },
+  { icon: '🚀', name: '25 Searches',   check: h => h.length >= 25 },
+  { icon: '💎', name: '50 Searches',   check: h => h.length >= 50 },
+  { icon: '🌟', name: 'Power User',    check: h => h.length >= 100 },
+  { icon: '❤️', name: 'Collector',     check: h => new Set(h.map(x => x.label)).size >= 5 },
+  { icon: '🎯', name: 'Variety',       check: h => new Set(h.map(x => x.label)).size >= 8 },
+  { icon: '🏙️', name: 'Night Owl',     check: _ => new Date().getHours() >= 21 || new Date().getHours() <= 4 },
+  { icon: '🌍', name: 'World Tour',    check: h => h.length >= 50 },
+  { icon: '👑', name: 'Legend',        check: h => h.length >= 200 },
+  { icon: '⚡', name: 'Speed Scout',   check: h => h.length >= 3 && (h[0].time - h[2].time) < 300000 },
+];
+
+// ═══ MAIN RENDER ═══
+function render() {
+  const history = getHistory();
+  const profile = getProfile();
+  const stats   = computeStats(history);
+  const cats    = computeCategories(history);
+
+  applyProfile(profile);
+
+  // Stats
+  document.getElementById('stat-searches').textContent = stats.totalSearches;
+  document.getElementById('stat-places').textContent   = stats.totalPlaces;
+  document.getElementById('stat-types').textContent    = stats.types;
+
+  // Badges
+  const earned = BADGE_DEFS.filter(b => b.check(history));
+  document.getElementById('stat-badges').textContent      = earned.length;
+  document.getElementById('badge-count-label').textContent = `${earned.length} / ${BADGE_DEFS.length} earned`;
+  document.getElementById('badges-grid').innerHTML = BADGE_DEFS.map(b => {
+    const isEarned = b.check(history);
+    return `<div class="badge${isEarned ? ' earned' : ''}" title="${isEarned ? 'Earned!' : 'Locked'}">
+      <div class="badge-icon" style="${isEarned ? '' : 'filter:grayscale(1);opacity:0.3'}">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+    </div>`;
+  }).join('');
+
+  // Dynamic tags based on activity
+  const tags = [`<span class="tag tag-green">📍 Explorer</span>`];
+  if (history.some(h => h.label.toLowerCase().includes('caf'))) tags.push(`<span class="tag tag-blue">☕ Café Hopper</span>`);
+  if (history.some(h => h.label.toLowerCase().includes('restaurant'))) tags.push(`<span class="tag tag-orange">🍜 Foodie</span>`);
+  document.getElementById('hero-tags').innerHTML = tags.join('');
+
+  // Recent list (top 4)
+  document.getElementById('recent-list').innerHTML = history.length
+    ? history.slice(0, 4).map(renderHistoryItem).join('')
+    : emptyHistoryHTML();
+
+  // Full history
+  document.getElementById('history-full').innerHTML = history.length
+    ? history.map(renderHistoryItem).join('')
+    : emptyHistoryHTML();
+
+  // Category bars
+  if (cats.length) {
+    const max = cats[0].count || 1;
+    document.getElementById('cat-bars').innerHTML = cats.map((c, i) =>
+      `<div class="cat-bar-row">
+        <div class="cat-bar-label">${c.icon}</div>
+        <div class="cat-bar-name">${c.name}</div>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${c.count/max*100}%;animation-delay:${i*0.1}s"></div></div>
+        <div class="cat-bar-count">${c.count}</div>
+      </div>`).join('');
+  } else {
+    document.getElementById('cat-bars').innerHTML = `<div style="color:var(--text-muted);font-size:12px;font-family:'Space Mono',monospace;padding:8px 0;">No data yet.</div>`;
+  }
+
+  // Heatmap — distribute searches across months based on real timestamps
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const year = new Date().getFullYear();
+  document.getElementById('heatmap-year').textContent = year;
+  const monthCounts = new Array(12).fill(0);
+  history.forEach(h => {
+    const d = new Date(h.time);
+    if (d.getFullYear() === year) monthCounts[d.getMonth()]++;
+  });
+  const maxMonth = Math.max(...monthCounts, 1);
+  const heatmap = document.getElementById('heatmap');
+  const heatmapLabels = document.getElementById('heatmap-labels');
+  heatmap.innerHTML = '';
+  heatmapLabels.innerHTML = '';
+  monthCounts.forEach((count, m) => {
+    const col = document.createElement('div');
+    col.className = 'heatmap-col';
+    for (let w = 0; w < 4; w++) {
+      const cell = document.createElement('div');
+      const ratio = count / maxMonth;
+      const lvl = ratio > 0.75 ? 'lvl4' : ratio > 0.5 ? 'lvl3' : ratio > 0.25 ? 'lvl2' : count > 0 ? 'lvl1' : '';
+      cell.className = 'heatmap-cell ' + lvl;
+      col.appendChild(cell);
+    }
+    heatmap.appendChild(col);
+    const lbl = document.createElement('div');
+    lbl.className = 'heatmap-month';
+    lbl.textContent = months[m];
+    heatmapLabels.appendChild(lbl);
+  });
+}
+
+// ═══ CLEAR HISTORY ═══
+function clearHistory() {
+  if (!confirm('Clear all search history?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  render();
+}
+
+// ═══ TOGGLES ═══
+const toggleSettings = [
+  { key: 'nb_pref_location', title: 'Location Tracking', desc: 'Allow app to track your position', default: true },
+  { key: 'nb_pref_history',  title: 'Save Search History', desc: 'Save your search sessions locally', default: true },
+  { key: 'nb_pref_metric',   title: 'Metric Units', desc: 'Use kilometers instead of miles', default: true },
+];
+document.getElementById('toggles').innerHTML = toggleSettings.map(t => {
+  const on = localStorage.getItem(t.key) !== 'false' && (localStorage.getItem(t.key) === 'true' || t.default);
+  return `<div class="toggle-row">
     <div class="toggle-info">
       <div class="toggle-title">${t.title}</div>
       <div class="toggle-desc">${t.desc}</div>
     </div>
-    <div class="toggle ${t.on ? 'on' : ''}" onclick="this.classList.toggle('on')"></div>
-  </div>`
-).join('');
+    <div class="toggle ${on ? 'on' : ''}" onclick="togglePref('${t.key}',this)"></div>
+  </div>`;
+}).join('');
 
-// ===================== TABS =====================
+function togglePref(key, el) {
+  el.classList.toggle('on');
+  localStorage.setItem(key, el.classList.contains('on'));
+}
+
+// ═══ TABS ═══
 function openTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1143,14 +663,15 @@ function openTab(name) {
   });
 }
 
-// ===================== CLOCK =====================
+// ═══ CLOCK ═══
 function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-US', { hour12: false });
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+// ═══ INIT ═══
+render();
 </script>
 </body>
 </html>
